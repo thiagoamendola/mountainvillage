@@ -4,17 +4,23 @@ extends Spatial
 const HTerrain = preload("res://addons/zylann.hterrain/hterrain.gd")
 const HTerrainData = preload("res://addons/zylann.hterrain/hterrain_data.gd")
 
-const cell_size = 128
+const cell_per_axis = 16
+const height_mountain_base = 30
+const height_mountain_multiplier = 40
+const height_plateau_base = 0
+const height_plateau_multiplier = 10
+const height_abyss_base = -60
+const height_abyss_multiplier = 0
 
 func _ready():
 
 	# Create terrain resource and give it a size.
 	# It must be either 513, 1025, 2049 or 4097.
 	var terrain_data = HTerrainData.new()
-	terrain_data.resize(513)
+	terrain_data.resize(1025)
 	
 	var noise = OpenSimplexNoise.new()
-	var noise_multiplier = 50.0
+	var rng = RandomNumberGenerator.new()
 
 	# Get access to terrain maps you want to modify
 	var heightmap: Image = terrain_data.get_image(HTerrainData.CHANNEL_HEIGHT)
@@ -28,23 +34,31 @@ func _ready():
 	# you may want to come up with your own
 	for z in heightmap.get_height():
 		for x in heightmap.get_width():
-			var x_cell = x / cell_size
-			var z_cell = z / cell_size
+			var z_cell = z / (heightmap.get_height()/cell_per_axis)
+			var x_cell = x / (heightmap.get_width()/cell_per_axis)
 			var h
 			var normal
 
-			if (z_cell + x_cell) % 2 == 0: 
-				# Generate height
-				h = noise_multiplier * noise.get_noise_2d(x, z)
-				# Getting normal by generating extra heights directly from noise,
-				# so map borders won't have seams in case you stitch them
-				var h_right = noise_multiplier * noise.get_noise_2d(x + 0.1, z)
-				var h_forward = noise_multiplier * noise.get_noise_2d(x, z + 0.1)
+			rng.seed = z_cell + 10000*x_cell
+			#if (z_cell + x_cell) % 2 == 0:
+			var rand_val = rng.randi_range(0,3)
+			if rand_val == 0:
+				# MOUNTAIN CELL
+				h = height_mountain_base + height_mountain_multiplier * noise.get_noise_2d(x, z)
+				var h_right = height_mountain_base + height_mountain_multiplier * noise.get_noise_2d(x + 0.1, z)
+				var h_forward = height_mountain_base + height_mountain_multiplier * noise.get_noise_2d(x, z + 0.1)
+				normal = Vector3(h - h_right, 0.1, h_forward - h).normalized()
+			elif rand_val == 1:
+				h = height_plateau_base + height_plateau_multiplier * noise.get_noise_2d(x, z)
+				var h_right = height_plateau_base + height_plateau_multiplier * noise.get_noise_2d(x + 0.1, z)
+				var h_forward = height_plateau_base + height_plateau_multiplier * noise.get_noise_2d(x, z + 0.1)
 				normal = Vector3(h - h_right, 0.1, h_forward - h).normalized()
 			else:
-				h = 0.0
-				normal = Vector3.UP
-				
+				h = height_abyss_base + height_abyss_multiplier * noise.get_noise_2d(x, z)
+				var h_right = height_abyss_base + height_abyss_multiplier * noise.get_noise_2d(x + 0.1, z)
+				var h_forward = height_abyss_base + height_abyss_multiplier * noise.get_noise_2d(x, z + 0.1)
+				normal = Vector3(h - h_right, 0.1, h_forward - h).normalized()
+			
 			heightmap.set_pixel(x, z, Color(h, 0, 0))
 			normalmap.set_pixel(x, z, HTerrainData.encode_normal(normal))
 
