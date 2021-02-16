@@ -3,15 +3,15 @@
 [ext_resource path="res://scripts/test/TerrainTest.gd" type="Script" id=1]
 [ext_resource path="res://addons/maujoe.camera_control/scripts/camera_control.gd" type="Script" id=2]
 [ext_resource path="res://addons/zylann.hterrain/hterrain.gd" type="Script" id=3]
-[ext_resource path="res://assets/textures/Rock022/Rock022_1K_Normal.png" type="Texture" id=4]
-[ext_resource path="res://assets/textures/Rock022/Rock022_1K_Color.png" type="Texture" id=5]
+[ext_resource path="res://assets/textures/Concrete019/Concrete019_1K_Normal.png" type="Texture" id=4]
+[ext_resource path="res://assets/textures/Concrete019/Concrete019_1K_Color.png" type="Texture" id=5]
 [ext_resource path="res://terrains/test2/data.hterrain" type="Resource" id=6]
 [ext_resource path="res://assets/textures/Rock029/Rock029_1K_Color.png" type="Texture" id=7]
 [ext_resource path="res://assets/textures/Rock029/Rock029_1K_Normal.png" type="Texture" id=8]
 [ext_resource path="res://assets/textures/Rock031/Rock031_1K_Normal.png" type="Texture" id=9]
 [ext_resource path="res://assets/textures/Rock031/Rock031_1K_Color.png" type="Texture" id=10]
-[ext_resource path="res://assets/textures/Rocks008/Rocks008_1K_Normal.png" type="Texture" id=11]
-[ext_resource path="res://assets/textures/Rocks008/Rocks008_1K_Color.png" type="Texture" id=12]
+[ext_resource path="res://assets/textures/Rock012/Rock012_1K_Color.png" type="Texture" id=11]
+[ext_resource path="res://assets/textures/Rock012/Rock012_1K_Normal.png" type="Texture" id=12]
 [ext_resource path="res://assets/textures/fog.png" type="Texture" id=13]
 
 [sub_resource type="QuadMesh" id=1]
@@ -83,12 +83,12 @@ shader_params/u_depth_blending = true
 shader_params/u_triplanar = true
 shader_params/u_globalmap_blend_start = null
 shader_params/u_globalmap_blend_distance = 0.0
-ground/albedo_bump_0 = ExtResource( 5 )
-ground/normal_roughness_0 = ExtResource( 4 )
-ground/albedo_bump_1 = ExtResource( 10 )
-ground/normal_roughness_1 = ExtResource( 9 )
-ground/albedo_bump_2 = ExtResource( 12 )
-ground/normal_roughness_2 = ExtResource( 11 )
+ground/albedo_bump_0 = ExtResource( 10 )
+ground/normal_roughness_0 = ExtResource( 9 )
+ground/albedo_bump_1 = ExtResource( 5 )
+ground/normal_roughness_1 = ExtResource( 4 )
+ground/albedo_bump_2 = ExtResource( 11 )
+ground/normal_roughness_2 = ExtResource( 12 )
 ground/albedo_bump_3 = ExtResource( 7 )
 ground/normal_roughness_3 = ExtResource( 8 )
 
