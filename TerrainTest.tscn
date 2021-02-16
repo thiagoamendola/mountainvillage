@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=2]
+[gd_scene load_steps=23 format=2]
 
 [ext_resource path="res://scripts/test/TerrainTest.gd" type="Script" id=1]
 [ext_resource path="res://addons/maujoe.camera_control/scripts/camera_control.gd" type="Script" id=2]
@@ -17,7 +17,8 @@
 [sub_resource type="QuadMesh" id=1]
 
 [sub_resource type="Gradient" id=5]
-colors = PoolColorArray( 1, 1, 1, 1, 1, 1, 1, 0 )
+offsets = PoolRealArray( 0.0046729, 0.140187, 0.995327 )
+colors = PoolColorArray( 0, 0, 0, 0, 0.633011, 0.618175, 0.618175, 0.545098, 1, 1, 1, 0 )
 
 [sub_resource type="GradientTexture" id=6]
 gradient = SubResource( 5 )
@@ -28,12 +29,15 @@ _data = [ Vector2( 0, 0.325489 ), 0.0, 0.0, 0, 0, Vector2( 1, 1 ), 0.0, 0.0, 0, 
 [sub_resource type="CurveTexture" id=8]
 curve = SubResource( 7 )
 
+[sub_resource type="CurveTexture" id=9]
+
 [sub_resource type="ParticlesMaterial" id=2]
 lifetime_randomness = 0.1
+trail_size_modifier = SubResource( 9 )
 emission_shape = 2
-emission_box_extents = Vector3( 2, 2, 2 )
+emission_box_extents = Vector3( 8, 1, 8 )
 spread = 100.0
-gravity = Vector3( 0, 1, 0 )
+gravity = Vector3( 0.1, 0.6, 0 )
 scale_curve = SubResource( 8 )
 color_ramp = SubResource( 6 )
 anim_offset = 1.0
@@ -53,6 +57,7 @@ albedo_texture = ExtResource( 13 )
 
 [sub_resource type="QuadMesh" id=4]
 material = SubResource( 3 )
+size = Vector2( 2, 1.2 )
 
 [node name="TerrainTest" type="Spatial"]
 script = ExtResource( 1 )
@@ -94,8 +99,9 @@ mesh = SubResource( 1 )
 material/0 = null
 
 [node name="FogParticles" type="Particles" parent="."]
-transform = Transform( 600, 0, 0, 0, 1, 0, 0, 0, 600, 980.429, -30, 983.94 )
-amount = 512
+transform = Transform( -150, 0, -1.31134e-05, 0, 1, 0, 1.31134e-05, 0, -150, 980.429, -50, 983.94 )
+amount = 1600
+lifetime = 3.0
 speed_scale = 0.5
 process_material = SubResource( 2 )
 draw_pass_1 = SubResource( 4 )
