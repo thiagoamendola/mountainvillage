@@ -25,9 +25,11 @@ func _ready():
 	# Get access to terrain maps you want to modify
 	var heightmap: Image = terrain_data.get_image(HTerrainData.CHANNEL_HEIGHT)
 	var normalmap: Image = terrain_data.get_image(HTerrainData.CHANNEL_NORMAL)
+	var splatmap: Image = terrain_data.get_image(HTerrainData.CHANNEL_SPLAT)
 	
 	heightmap.lock()
 	normalmap.lock()
+	splatmap.lock()
 
 	# Generate terrain maps
 	# Note: this is an example with some arbitrary formulas,
@@ -38,6 +40,7 @@ func _ready():
 			var x_cell = x / (heightmap.get_width()/cell_per_axis)
 			var h
 			var normal
+			var c = splatmap.get_pixel(x, z)
 
 			rng.seed = z_cell + 10000*x_cell
 			#if (z_cell + x_cell) % 2 == 0:
@@ -54,23 +57,28 @@ func _ready():
 				var h_right = height_plateau_base + height_plateau_multiplier * noise.get_noise_2d(x + 0.1, z)
 				var h_forward = height_plateau_base + height_plateau_multiplier * noise.get_noise_2d(x, z + 0.1)
 				normal = Vector3(h - h_right, 0.1, h_forward - h).normalized()
+				c = Color(0.0, 0.0, 1.0, 0.0)
 			else:
 				# ABYSS CELL
 				h = height_abyss_base + height_abyss_multiplier * noise.get_noise_2d(x, z)
 				var h_right = height_abyss_base + height_abyss_multiplier * noise.get_noise_2d(x + 0.1, z)
 				var h_forward = height_abyss_base + height_abyss_multiplier * noise.get_noise_2d(x, z + 0.1)
 				normal = Vector3(h - h_right, 0.1, h_forward - h).normalized()
+				c = Color(0.5, 1.0, 0.0, 0.0)
 			
 			heightmap.set_pixel(x, z, Color(h, 0, 0))
 			normalmap.set_pixel(x, z, HTerrainData.encode_normal(normal))
+			splatmap.set_pixel(x, z, c)
 
 	heightmap.unlock()
 	normalmap.unlock()
+	splatmap.unlock()
 	
 	# Commit modifications so they get uploaded to the graphics card
 	var modified_region = Rect2(Vector2(), heightmap.get_size())
 	terrain_data.notify_region_change(modified_region, HTerrainData.CHANNEL_HEIGHT)
 	terrain_data.notify_region_change(modified_region, HTerrainData.CHANNEL_NORMAL)
+	terrain_data.notify_region_change(modified_region, HTerrainData.CHANNEL_SPLAT)
 
 	# Create terrain node
 	var terrain = $MountainRangeTerrain
