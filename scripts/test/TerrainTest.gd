@@ -49,11 +49,13 @@ func _ready():
 				var h_forward = height_mountain_base + height_mountain_multiplier * noise.get_noise_2d(x, z + 0.1)
 				normal = Vector3(h - h_right, 0.1, h_forward - h).normalized()
 			elif rand_val == 1:
+				# PLATEAU CELL
 				h = height_plateau_base + height_plateau_multiplier * noise.get_noise_2d(x, z)
 				var h_right = height_plateau_base + height_plateau_multiplier * noise.get_noise_2d(x + 0.1, z)
 				var h_forward = height_plateau_base + height_plateau_multiplier * noise.get_noise_2d(x, z + 0.1)
 				normal = Vector3(h - h_right, 0.1, h_forward - h).normalized()
 			else:
+				# ABYSS CELL
 				h = height_abyss_base + height_abyss_multiplier * noise.get_noise_2d(x, z)
 				var h_right = height_abyss_base + height_abyss_multiplier * noise.get_noise_2d(x + 0.1, z)
 				var h_forward = height_abyss_base + height_abyss_multiplier * noise.get_noise_2d(x, z + 0.1)
@@ -71,10 +73,9 @@ func _ready():
 	terrain_data.notify_region_change(modified_region, HTerrainData.CHANNEL_NORMAL)
 
 	# Create terrain node
-	var terrain = HTerrain.new()
-	#terrain.set_shader_type(HTerrain.SHADER_CLASSIC4_LITE)
+	var terrain = $MountainRangeTerrain
 	terrain.set_data(terrain_data)
 	add_child(terrain)
-			
+	
 	# No need to call this, but you may need to if you edit the terrain later on
 	#terrain.update_collider()
