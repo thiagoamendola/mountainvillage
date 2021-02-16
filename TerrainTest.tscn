@@ -1,4 +1,4 @@
-[gd_scene load_steps=23 format=2]
+[gd_scene load_steps=26 format=2]
 
 [ext_resource path="res://scripts/test/TerrainTest.gd" type="Script" id=1]
 [ext_resource path="res://addons/maujoe.camera_control/scripts/camera_control.gd" type="Script" id=2]
@@ -16,34 +16,101 @@
 
 [sub_resource type="QuadMesh" id=1]
 
-[sub_resource type="Gradient" id=5]
+[sub_resource type="Shader" id=13]
+code = "shader_type spatial;
+render_mode blend_mix,depth_draw_opaque,cull_back,diffuse_burley,specular_schlick_ggx;
+uniform vec4 albedo : hint_color;
+uniform sampler2D texture_albedo : hint_albedo;
+uniform float specular;
+uniform float metallic;
+uniform float roughness : hint_range(0,1);
+uniform float point_size : hint_range(0,128);
+uniform vec3 uv1_scale;
+uniform vec3 uv1_offset;
+uniform vec3 uv2_scale;
+uniform vec3 uv2_offset;
+
+
+uniform vec2 tiled_factor = vec2(5.0);
+uniform vec2 wave_amplitude = vec2(0.25);
+uniform float wave_speed = 1.0;
+uniform vec2 offset_scale = vec2(1.5, 1.0);
+
+
+void vertex() {
+	UV=UV*uv1_scale.xy+uv1_offset.xy;
+}
+
+
+void fragment() {
+	
+	vec2 base_uv = UV;
+	
+	vec2 tiled_uvs = base_uv * tiled_factor;
+	
+	vec2 waves_uv_offset;
+	waves_uv_offset.x = cos(TIME * wave_speed + (tiled_uvs.x + tiled_uvs.y) * offset_scale.x) * wave_amplitude.x;
+	waves_uv_offset.y = sin(TIME * wave_speed + (tiled_uvs.x + tiled_uvs.y) * offset_scale.y) * wave_amplitude.y;
+	
+	//COLOR = vec4(waves_uv_offset, 0.0, 1.0);
+	vec4 albedo_tex = texture(texture_albedo, tiled_uvs + waves_uv_offset);
+
+	ALBEDO = albedo.rgb * albedo_tex.rgb;
+	METALLIC = metallic;
+	ROUGHNESS = roughness;
+	SPECULAR = specular;
+}
+"
+
+[sub_resource type="ShaderMaterial" id=14]
+shader = SubResource( 13 )
+shader_param/albedo = Color( 1, 1, 1, 1 )
+shader_param/specular = 0.5
+shader_param/metallic = 0.0
+shader_param/roughness = 1.0
+shader_param/point_size = 1.0
+shader_param/uv1_scale = Vector3( 20, 20, 0 )
+shader_param/uv1_offset = Vector3( 0, 0, 0 )
+shader_param/uv2_scale = Vector3( 1, 1, 1 )
+shader_param/uv2_offset = Vector3( 0, 0, 0 )
+shader_param/tiled_factor = Vector2( 1, 1 )
+shader_param/wave_amplitude = Vector2( 0.15, 0.15 )
+shader_param/wave_speed = 0.7
+shader_param/offset_scale = Vector2( 1.75, 1 )
+shader_param/texture_albedo = ExtResource( 5 )
+
+[sub_resource type="Gradient" id=4]
 offsets = PoolRealArray( 0.0046729, 0.140187, 0.995327 )
 colors = PoolColorArray( 0, 0, 0, 0, 0.633011, 0.618175, 0.618175, 0.545098, 1, 1, 1, 0 )
 
-[sub_resource type="GradientTexture" id=6]
-gradient = SubResource( 5 )
+[sub_resource type="GradientTexture" id=5]
+gradient = SubResource( 4 )
 
-[sub_resource type="Curve" id=7]
+[sub_resource type="Curve" id=6]
 _data = [ Vector2( 0, 0.325489 ), 0.0, 0.0, 0, 0, Vector2( 1, 1 ), 0.0, 0.0, 0, 0 ]
 
-[sub_resource type="CurveTexture" id=8]
-curve = SubResource( 7 )
+[sub_resource type="CurveTexture" id=7]
+curve = SubResource( 6 )
+
+[sub_resource type="Curve" id=8]
+_data = [ Vector2( 0, 1 ), 0.0, 0.0, 0, 0, Vector2( 1, 1 ), 0.0, 0.0, 0, 0 ]
 
 [sub_resource type="CurveTexture" id=9]
+curve = SubResource( 8 )
 
-[sub_resource type="ParticlesMaterial" id=2]
+[sub_resource type="ParticlesMaterial" id=10]
 lifetime_randomness = 0.1
 trail_size_modifier = SubResource( 9 )
 emission_shape = 2
 emission_box_extents = Vector3( 8, 1, 8 )
 spread = 100.0
 gravity = Vector3( 0.1, 0.6, 0 )
-scale_curve = SubResource( 8 )
-color_ramp = SubResource( 6 )
+scale_curve = SubResource( 7 )
+color_ramp = SubResource( 5 )
 anim_offset = 1.0
 anim_offset_random = 1.0
 
-[sub_resource type="SpatialMaterial" id=3]
+[sub_resource type="SpatialMaterial" id=11]
 flags_transparent = true
 flags_vertex_lighting = true
 flags_do_not_receive_shadows = true
@@ -55,8 +122,8 @@ particles_anim_v_frames = 1
 particles_anim_loop = false
 albedo_texture = ExtResource( 13 )
 
-[sub_resource type="QuadMesh" id=4]
-material = SubResource( 3 )
+[sub_resource type="QuadMesh" id=12]
+material = SubResource( 11 )
 size = Vector2( 2, 1.2 )
 
 [node name="TerrainTest" type="Spatial"]
@@ -92,16 +159,15 @@ ground/normal_roughness_2 = ExtResource( 12 )
 ground/albedo_bump_3 = ExtResource( 7 )
 ground/normal_roughness_3 = ExtResource( 8 )
 
-[node name="FogHeightReference" type="MeshInstance" parent="."]
-transform = Transform( 2000, 0, 0, 0, -0.000325841, 1, 0, -2000, -1.62921e-07, 980.429, -29.6823, 983.94 )
-visible = false
+[node name="FogPlaneLayer" type="MeshInstance" parent="."]
+transform = Transform( 2400, 0, 0, 0, -0.000104907, 1, 0, -2400, -4.37114e-08, 980.429, -96.5167, 983.94 )
 mesh = SubResource( 1 )
-material/0 = null
+material/0 = SubResource( 14 )
 
 [node name="FogParticles" type="Particles" parent="."]
 transform = Transform( -150, 0, -1.31134e-05, 0, 1, 0, 1.31134e-05, 0, -150, 980.429, -50, 983.94 )
-amount = 1600
+amount = 1800
 lifetime = 3.0
 speed_scale = 0.5
-process_material = SubResource( 2 )
-draw_pass_1 = SubResource( 4 )
+process_material = SubResource( 10 )
+draw_pass_1 = SubResource( 12 )
