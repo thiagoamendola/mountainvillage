@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=2]
+[gd_scene load_steps=22 format=2]
 
 [ext_resource path="res://scripts/test/TerrainTest.gd" type="Script" id=1]
 [ext_resource path="res://addons/maujoe.camera_control/scripts/camera_control.gd" type="Script" id=2]
@@ -12,8 +12,47 @@
 [ext_resource path="res://assets/textures/Rock031/Rock031_1K_Color.png" type="Texture" id=10]
 [ext_resource path="res://assets/textures/Rocks008/Rocks008_1K_Normal.png" type="Texture" id=11]
 [ext_resource path="res://assets/textures/Rocks008/Rocks008_1K_Color.png" type="Texture" id=12]
+[ext_resource path="res://assets/textures/fog.png" type="Texture" id=13]
 
 [sub_resource type="QuadMesh" id=1]
+
+[sub_resource type="Gradient" id=5]
+colors = PoolColorArray( 1, 1, 1, 1, 1, 1, 1, 0 )
+
+[sub_resource type="GradientTexture" id=6]
+gradient = SubResource( 5 )
+
+[sub_resource type="Curve" id=7]
+_data = [ Vector2( 0, 0.325489 ), 0.0, 0.0, 0, 0, Vector2( 1, 1 ), 0.0, 0.0, 0, 0 ]
+
+[sub_resource type="CurveTexture" id=8]
+curve = SubResource( 7 )
+
+[sub_resource type="ParticlesMaterial" id=2]
+lifetime_randomness = 0.1
+emission_shape = 2
+emission_box_extents = Vector3( 2, 2, 2 )
+spread = 100.0
+gravity = Vector3( 0, 1, 0 )
+scale_curve = SubResource( 8 )
+color_ramp = SubResource( 6 )
+anim_offset = 1.0
+anim_offset_random = 1.0
+
+[sub_resource type="SpatialMaterial" id=3]
+flags_transparent = true
+flags_vertex_lighting = true
+flags_do_not_receive_shadows = true
+vertex_color_use_as_albedo = true
+params_blend_mode = 1
+params_billboard_mode = 3
+particles_anim_h_frames = 8
+particles_anim_v_frames = 1
+particles_anim_loop = false
+albedo_texture = ExtResource( 13 )
+
+[sub_resource type="QuadMesh" id=4]
+material = SubResource( 3 )
 
 [node name="TerrainTest" type="Spatial"]
 script = ExtResource( 1 )
@@ -48,7 +87,15 @@ ground/normal_roughness_2 = ExtResource( 11 )
 ground/albedo_bump_3 = ExtResource( 7 )
 ground/normal_roughness_3 = ExtResource( 8 )
 
-[node name="MeshInstance" type="MeshInstance" parent="."]
+[node name="FogHeightReference" type="MeshInstance" parent="."]
 transform = Transform( 2000, 0, 0, 0, -0.000325841, 1, 0, -2000, -1.62921e-07, 980.429, -29.6823, 983.94 )
+visible = false
 mesh = SubResource( 1 )
 material/0 = null
+
+[node name="FogParticles" type="Particles" parent="."]
+transform = Transform( 600, 0, 0, 0, 1, 0, 0, 0, 600, 980.429, -30, 983.94 )
+amount = 512
+speed_scale = 0.5
+process_material = SubResource( 2 )
+draw_pass_1 = SubResource( 4 )
