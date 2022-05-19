@@ -8,6 +8,7 @@ func _ready():
 	dumb_texture_creation()
 
 
+# Worley Noise
 func dumb_texture_creation():
 	var texture = ImageTexture.new()
 	var image: Image = Image.new()
@@ -15,14 +16,25 @@ func dumb_texture_creation():
 	image.load("res://icon.png")
 	image.create(IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS, false, Image.FORMAT_RGB8)
 	image.lock()
-#	image.fill(Color(1,0,0,1))
 	
 	# Create list of random points
 	var points = []
 	for i in range(POINTS_COUNT):
 		points.append(Vector2(int(rand_range(0,IMAGE_SIZE_PIXELS)), int(rand_range(0,IMAGE_SIZE_PIXELS))))
-		image.set_pixelv(points[i], Color.red)	
-
+		image.set_pixelv(points[i], Color.red)
+	
+	# Add 2D mirroring of points to make texture seamless
+	var initial_points = points.duplicate()
+	for point in initial_points:
+		points.append(point + Vector2(IMAGE_SIZE_PIXELS, 0))
+		points.append(point + Vector2(IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS))
+		points.append(point + Vector2(0, IMAGE_SIZE_PIXELS))
+		points.append(point + Vector2(-IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS))
+		points.append(point + Vector2(-IMAGE_SIZE_PIXELS, 0))
+		points.append(point + Vector2(-IMAGE_SIZE_PIXELS, -IMAGE_SIZE_PIXELS))
+		points.append(point + Vector2(0, -IMAGE_SIZE_PIXELS))
+		points.append(point + Vector2(IMAGE_SIZE_PIXELS, -IMAGE_SIZE_PIXELS))
+	
 	# Trace the distance between the closest point for each pixel
 	# Brute force version
 	var MAX_DIST = int(IMAGE_SIZE_PIXELS*.25)
@@ -47,4 +59,6 @@ func dumb_texture_creation():
 
 	texture.create_from_image(image)
 	$TextureRect.texture = texture
+	$TextureRect2.rect_position = Vector2(IMAGE_SIZE_PIXELS, 0)
+	$TextureRect2.texture = texture
 
