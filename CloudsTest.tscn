@@ -158,3 +158,16 @@ rect_pivot_offset = Vector2( -261, 20 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="TextureRect3" type="TextureRect" parent="Control"]
+margin_right = 40.0
+margin_bottom = 40.0
+rect_pivot_offset = Vector2( -261, 20 )
+
+[node name="TextureRect4" type="TextureRect" parent="Control"]
+margin_right = 40.0
+margin_bottom = 40.0
+rect_pivot_offset = Vector2( -261, 20 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
