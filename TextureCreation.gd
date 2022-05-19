@@ -1,8 +1,11 @@
 extends Control
 
 const IMAGE_SIZE_PIXELS = 500
+const POINTS_PER_AXIS = 5
+const MAX_DIST_MULTIPLIER = 0.2
 
-const POINTS_COUNT = 20
+var POINTS_COUNT = POINTS_PER_AXIS*POINTS_PER_AXIS
+
 
 func _ready():
 	dumb_texture_creation()
@@ -17,11 +20,16 @@ func dumb_texture_creation():
 	image.create(IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS, false, Image.FORMAT_RGB8)
 	image.lock()
 	
-	# Create list of random points
+	# Create list of aproximated random points by discrete sectors 
 	var points = []
+	var SECTOR_SIZE = IMAGE_SIZE_PIXELS/POINTS_PER_AXIS
 	for i in range(POINTS_COUNT):
-		points.append(Vector2(int(rand_range(0,IMAGE_SIZE_PIXELS)), int(rand_range(0,IMAGE_SIZE_PIXELS))))
+		var sector_interval_origin = Vector2(SECTOR_SIZE*(i%POINTS_PER_AXIS), SECTOR_SIZE*(i/POINTS_PER_AXIS))
+		points.append(Vector2( \
+			int(rand_range(sector_interval_origin.x, sector_interval_origin.x + SECTOR_SIZE)), \
+			int(rand_range(sector_interval_origin.y, sector_interval_origin.y + SECTOR_SIZE))))
 		image.set_pixelv(points[i], Color.red)
+		
 	
 	# Add 2D mirroring of points to make texture seamless
 	var initial_points = points.duplicate()
@@ -37,7 +45,7 @@ func dumb_texture_creation():
 	
 	# Trace the distance between the closest point for each pixel
 	# Brute force version
-	var MAX_DIST = int(IMAGE_SIZE_PIXELS*.25)
+	var MAX_DIST = int(IMAGE_SIZE_PIXELS*MAX_DIST_MULTIPLIER)
 	for i in range(IMAGE_SIZE_PIXELS):
 		for j in range(IMAGE_SIZE_PIXELS):
 			var min_dist = INF
