@@ -1,14 +1,26 @@
 extends Control
 
 const IMAGE_SIZE_PIXELS = 500
-const POINTS_PER_AXIS = 5
-const MAX_DIST_MULTIPLIER = 0.2
+var POINTS_PER_AXIS = 5
+export var MAX_DIST_MULTIPLIER = 0.2
 
 var POINTS_COUNT = POINTS_PER_AXIS*POINTS_PER_AXIS
 var SECTOR_SIZE = IMAGE_SIZE_PIXELS/POINTS_PER_AXIS
 
 func _ready():
-	dumb_texture_creation()
+	pass
+
+func _process(delta):
+	var texture = dumb_texture_creation()
+	
+#	$TextureRect2.rect_position = Vector2(IMAGE_SIZE_PIXELS, 0)
+#	$TextureRect3.rect_position = Vector2(0, IMAGE_SIZE_PIXELS)
+#	$TextureRect4.rect_position = Vector2(IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS)
+	$TextureRect.texture = texture
+#	$TextureRect2.texture = texture
+#	$TextureRect3.texture = texture
+#	$TextureRect4.texture = texture
+
 
 # Creates an ordered list with the provided points along with repeated opposite 
 # ones to allow a seamless texture creation 
@@ -103,11 +115,4 @@ func dumb_texture_creation():
 	image.unlock()
 
 	texture.create_from_image(image)
-	$TextureRect2.rect_position = Vector2(IMAGE_SIZE_PIXELS, 0)
-	$TextureRect3.rect_position = Vector2(0, IMAGE_SIZE_PIXELS)
-	$TextureRect4.rect_position = Vector2(IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS)
-	$TextureRect.texture = texture
-	$TextureRect2.texture = texture
-	$TextureRect3.texture = texture
-	$TextureRect4.texture = texture
-
+	return texture

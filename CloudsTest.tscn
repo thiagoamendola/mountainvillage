@@ -1,8 +1,9 @@
-[gd_scene load_steps=17 format=2]
+[gd_scene load_steps=19 format=2]
 
 [ext_resource path="res://TextureCreation.gd" type="Script" id=1]
 [ext_resource path="res://assets/textures/Concrete019/Concrete019_1K_Color.png" type="Texture" id=2]
 [ext_resource path="res://assets/textures/fog.png" type="Texture" id=3]
+[ext_resource path="res://NoiseCreation2D.gdshader" type="Shader" id=4]
 
 [sub_resource type="QuadMesh" id=1]
 
@@ -121,6 +122,9 @@ albedo_texture = ExtResource( 3 )
 material = SubResource( 12 )
 size = Vector2( 2, 1.2 )
 
+[sub_resource type="ShaderMaterial" id=14]
+shader = ExtResource( 4 )
+
 [node name="Spatial" type="Spatial"]
 
 [node name="FogPlaneLayer" type="MeshInstance" parent="."]
@@ -145,8 +149,10 @@ script = ExtResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
+MAX_DIST_MULTIPLIER = 0.22
 
 [node name="TextureRect" type="TextureRect" parent="Control"]
+material = SubResource( 14 )
 margin_right = 40.0
 margin_bottom = 40.0
 rect_pivot_offset = Vector2( -261, 20 )
