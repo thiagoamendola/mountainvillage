@@ -11,7 +11,7 @@ func _ready():
 	pass
 
 func _process(delta):
-	var texture = dumb_texture_creation()
+	var texture = fog_texture_creation()
 	
 #	$TextureRect2.rect_position = Vector2(IMAGE_SIZE_PIXELS, 0)
 #	$TextureRect3.rect_position = Vector2(0, IMAGE_SIZE_PIXELS)
@@ -69,16 +69,8 @@ func get_adjacent_sector_points(seamless_points, current_pixel):
 	return adjacent_points
 
 
-# Worley Noise
-func dumb_texture_creation():
-	var texture = ImageTexture.new()
-	var image: Image = Image.new()
-	
-	image.load("res://icon.png")
-	image.create(IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS, false, Image.FORMAT_RGB8)
-	image.lock()
-	
-	# Create list of aproximated random points by discrete sectors 
+#
+func create_discrete_sector_points_list():
 	var points = []
 	for i in range(POINTS_COUNT):
 		var sector_interval_origin = Vector2(SECTOR_SIZE*(i%POINTS_PER_AXIS), SECTOR_SIZE*(i/POINTS_PER_AXIS))
@@ -87,11 +79,12 @@ func dumb_texture_creation():
 #			int(sector_interval_origin.x), \
 			int(rand_range(sector_interval_origin.y, sector_interval_origin.y + SECTOR_SIZE))))
 #			int(sector_interval_origin.y)))
-		image.set_pixelv(points[i], Color.red)
-	
-	# Create ordered list that includes repeated points from edge sections to make texture seamless
-	var seamless_points = create_seamless_points(points)
-	
+	return points
+
+
+func create_image_cpu(image, seamless_points):
+	image.lock()
+
 	# Trace the distance between the closest point for each pixel by checking adjacent sectors
 	var MAX_DIST = int(IMAGE_SIZE_PIXELS*MAX_DIST_MULTIPLIER)
 	for i in range(IMAGE_SIZE_PIXELS):
@@ -109,10 +102,29 @@ func dumb_texture_creation():
 		for j in range(IMAGE_SIZE_PIXELS):
 			image.set_pixelv(Vector2(i,j), image.get_pixelv(Vector2(i,j)).inverted())
 
+	# Add visible points for reference
 	for p in seamless_points:
 		image.set_pixelv(p, Color.red)
 
 	image.unlock()
+
+
+# Worley Noise
+func fog_texture_creation():
+	var texture = ImageTexture.new()
+	var image: Image = Image.new()
+	
+	image.create(IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS, false, Image.FORMAT_RGB8)
+	
+	# Create list of aproximated random points by discrete sectors 
+	var points = create_discrete_sector_points_list()
+	
+	# Create ordered list that includes repeated points from edge sections to make texture seamless.
+	var seamless_points = create_seamless_points(points)
+	
+	#
+	create_image_cpu(image, seamless_points)
+
 
 	texture.create_from_image(image)
 	return texture
