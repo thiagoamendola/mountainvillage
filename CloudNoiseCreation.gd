@@ -112,9 +112,6 @@ func create_image_cpu(image, seamless_points):
 # Uses Worley Noise algorithm to generate a cloud texture.
 func cloud_texture_creation():
 	var texture = ImageTexture.new()
-	var image: Image = Image.new()
-	
-	image.create(IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS, false, Image.FORMAT_RGB8)
 	
 	# Create list of aproximated random points by discrete sectors 
 	var points = create_discrete_sector_points_list()
@@ -125,9 +122,9 @@ func cloud_texture_creation():
 	# Create image in CPU
 	# create_image_cpu(image, seamless_points)
 
+	print(SECTOR_SIZE)
 	# Convert seamless_points_image into a sampler2D texture with xy in rg channel
 	var seamless_points_image: Image = Image.new()
-	print(SECTOR_SIZE)
 
 	seamless_points_image.create(SEAMLESS_POINTS_PER_AXIS, SEAMLESS_POINTS_PER_AXIS, false, Image.FORMAT_RGB8)
 	seamless_points_image.lock()
@@ -137,11 +134,11 @@ func cloud_texture_creation():
 				fposmod(seamless_points[x + SEAMLESS_POINTS_PER_AXIS*y].x, SECTOR_SIZE), \
 				fposmod(seamless_points[x + SEAMLESS_POINTS_PER_AXIS*y].y, SECTOR_SIZE))
 			var coord_in_sector_unit = coord_in_sector_raw / SECTOR_SIZE
-			seamless_points_image.set_pixelv(Vector2(x,y), Color(coord_in_sector_unit.x, coord_in_sector_unit.y, 0))
-			print(Color(coord_in_sector_unit.x, coord_in_sector_unit.y, 0))
-
+			seamless_points_image.set_pixelv(Vector2(x,y), Color(coord_in_sector_unit.x, coord_in_sector_unit.y, 0, 1))
 	seamless_points_image.unlock()
-	
 
+	$TextureRect.material.set_shader_param("sector_size", SECTOR_SIZE)
 	texture.create_from_image(seamless_points_image)
+	$TextureRect.material.set_shader_param("seamless_points_tex", texture)
+
 	return texture

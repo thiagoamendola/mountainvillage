@@ -1,9 +1,10 @@
-[gd_scene load_steps=19 format=2]
+[gd_scene load_steps=20 format=2]
 
 [ext_resource path="res://CloudNoiseCreation.gd" type="Script" id=1]
 [ext_resource path="res://assets/textures/Concrete019/Concrete019_1K_Color.png" type="Texture" id=2]
 [ext_resource path="res://assets/textures/fog.png" type="Texture" id=3]
 [ext_resource path="res://CloudNoiseCreation2D.gdshader" type="Shader" id=4]
+[ext_resource path="res://icon.png" type="Texture" id=5]
 
 [sub_resource type="QuadMesh" id=1]
 
@@ -126,6 +127,7 @@ size = Vector2( 2, 1.2 )
 shader = ExtResource( 4 )
 shader_param/sector_size = null
 shader_param/test = null
+shader_param/seamless_points_tex = ExtResource( 5 )
 
 [node name="Spatial" type="Spatial"]
 
@@ -155,9 +157,13 @@ MAX_DIST_MULTIPLIER = 0.22
 
 [node name="TextureRect" type="TextureRect" parent="Control"]
 material = SubResource( 14 )
-margin_right = 829.0
-margin_bottom = 436.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_right = -117.0
+margin_bottom = -29.0
 rect_pivot_offset = Vector2( -261, 20 )
+texture = ExtResource( 5 )
+stretch_mode = 1
 
 [node name="TextureRect2" type="TextureRect" parent="Control"]
 margin_right = 40.0
