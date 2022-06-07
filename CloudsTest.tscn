@@ -155,7 +155,7 @@ __meta__ = {
 }
 MAX_DIST_MULTIPLIER = 0.22
 
-[node name="TextureRect" type="TextureRect" parent="Control"]
+[node name="CloudRect" type="TextureRect" parent="Control"]
 material = SubResource( 14 )
 anchor_right = 1.0
 anchor_bottom = 1.0

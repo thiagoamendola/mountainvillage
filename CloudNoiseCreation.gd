@@ -10,13 +10,14 @@ var SEAMLESS_POINTS_PER_AXIS = POINTS_PER_AXIS+2
 
 func _ready():
 	var texture = cloud_texture_creation()
-#	$TextureRect2.rect_position = Vector2(IMAGE_SIZE_PIXELS, 0)
-#	$TextureRect3.rect_position = Vector2(0, IMAGE_SIZE_PIXELS)
-#	$TextureRect4.rect_position = Vector2(IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS)
-#	$TextureRect.texture = texture
-#	$TextureRect2.texture = texture
-#	$TextureRect3.texture = texture
-#	$TextureRect4.texture = texture
+	#	$TextureRect2.rect_position = Vector2(IMAGE_SIZE_PIXELS, 0)
+	#	$TextureRect3.rect_position = Vector2(0, IMAGE_SIZE_PIXELS)
+	#	$TextureRect4.rect_position = Vector2(IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS)
+	#	$TextureRect.texture = texture
+	#	$TextureRect2.texture = texture
+	#	$TextureRect3.texture = texture
+	#	$TextureRect4.texture = texture
+	pass
 	
 func _process(delta):
 	pass
@@ -137,8 +138,8 @@ func cloud_texture_creation():
 			seamless_points_image.set_pixelv(Vector2(x,y), Color(coord_in_sector_unit.x, coord_in_sector_unit.y, 0, 1))
 	seamless_points_image.unlock()
 
-	$TextureRect.material.set_shader_param("sector_size", SECTOR_SIZE)
+	$CloudRect.material.set_shader_param("sector_size", SECTOR_SIZE)
 	texture.create_from_image(seamless_points_image)
-	$TextureRect.material.set_shader_param("seamless_points_tex", texture)
+	$CloudRect.material.set_shader_param("seamless_points_tex", texture)
 
 	return texture
