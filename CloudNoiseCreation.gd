@@ -1,27 +1,39 @@
 extends Control
 
-const IMAGE_SIZE_PIXELS = 500
-var POINTS_PER_AXIS = 5
-export var MAX_DIST_MULTIPLIER = 0.2
+export var IMAGE_SIZE_PIXELS := 300
+export var POINTS_PER_AXIS := 5
+export var INTENSITY_MULTIPLIER := 1.0
 
-var POINTS_COUNT = POINTS_PER_AXIS*POINTS_PER_AXIS
-var SECTOR_SIZE = IMAGE_SIZE_PIXELS/POINTS_PER_AXIS
-var SEAMLESS_POINTS_PER_AXIS = POINTS_PER_AXIS+2
+var POINTS_COUNT
+var SECTOR_SIZE
+var SEAMLESS_POINTS_PER_AXIS
 
 func _ready():
-	var texture = cloud_texture_creation()
-	#	$TextureRect2.rect_position = Vector2(IMAGE_SIZE_PIXELS, 0)
-	#	$TextureRect3.rect_position = Vector2(0, IMAGE_SIZE_PIXELS)
-	#	$TextureRect4.rect_position = Vector2(IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS)
-	#	$TextureRect.texture = texture
-	#	$TextureRect2.texture = texture
-	#	$TextureRect3.texture = texture
-	#	$TextureRect4.texture = texture
+	cloud_texture_creation()
 	pass
-	
+
 func _process(delta):
 	pass
-	
+
+func _input(event):
+	if event is InputEventKey and event.pressed:
+		if event.scancode == KEY_SPACE:
+			cloud_texture_creation()
+	pass
+
+func setup_texture_creation():
+#	IMAGE_SIZE_PIXELS = 
+	# Set main variables with latest values.
+	POINTS_COUNT = POINTS_PER_AXIS*POINTS_PER_AXIS
+	SECTOR_SIZE = IMAGE_SIZE_PIXELS/POINTS_PER_AXIS
+	SEAMLESS_POINTS_PER_AXIS = POINTS_PER_AXIS+2
+	#
+	var texture = ImageTexture.new()
+	var image = Image.new()
+	image.create(IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS, false, 4)
+	image.fill(Color(0, 0, 0))
+	texture.create_from_image(image)
+	$CloudRect.texture = texture
 
 
 # Creates a list of points based in sectors. Used as part of Worley Noise algorithm.
@@ -87,7 +99,7 @@ func create_image_cpu(image, seamless_points):
 	image.lock()
 
 	# Trace the distance between the closest point for each pixel by checking adjacent sectors
-	var MAX_DIST = int(IMAGE_SIZE_PIXELS*MAX_DIST_MULTIPLIER)
+	var MAX_DIST = int(IMAGE_SIZE_PIXELS)
 	for i in range(IMAGE_SIZE_PIXELS):
 		for j in range(IMAGE_SIZE_PIXELS):
 			var min_dist = INF
@@ -96,7 +108,7 @@ func create_image_cpu(image, seamless_points):
 				var cur_dist = p.distance_to(current_pixel)
 				if cur_dist < min_dist:
 					min_dist = cur_dist
-			image.set_pixelv(current_pixel, Color.white * clamp(min_dist / MAX_DIST, 0, 1))
+			image.set_pixelv(current_pixel, Color.white * clamp(INTENSITY_MULTIPLIER * min_dist / MAX_DIST, 0, 1))
 
 	# Invert image
 	for i in range(IMAGE_SIZE_PIXELS):
@@ -113,6 +125,8 @@ func create_image_cpu(image, seamless_points):
 # Uses Worley Noise algorithm to generate a cloud texture.
 func cloud_texture_creation():
 	var texture = ImageTexture.new()
+	
+	setup_texture_creation()
 	
 	# Create list of aproximated random points by discrete sectors 
 	var points = create_discrete_sector_points_list()
@@ -137,9 +151,11 @@ func cloud_texture_creation():
 			var coord_in_sector_unit = coord_in_sector_raw / SECTOR_SIZE
 			seamless_points_image.set_pixelv(Vector2(x,y), Color(coord_in_sector_unit.x, coord_in_sector_unit.y, 0, 1))
 	seamless_points_image.unlock()
-
-	$CloudRect.material.set_shader_param("sector_size", SECTOR_SIZE)
 	texture.create_from_image(seamless_points_image)
+	
+	$CloudRect.material.set_shader_param("texture_size", IMAGE_SIZE_PIXELS)
+	$CloudRect.material.set_shader_param("sector_size", SECTOR_SIZE)
+	$CloudRect.material.set_shader_param("intensity_multiplier", INTENSITY_MULTIPLIER)
 	$CloudRect.material.set_shader_param("seamless_points_tex", texture)
 
 	return texture

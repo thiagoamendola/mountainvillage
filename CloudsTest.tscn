@@ -125,8 +125,9 @@ size = Vector2( 2, 1.2 )
 
 [sub_resource type="ShaderMaterial" id=14]
 shader = ExtResource( 4 )
+shader_param/texture_size = null
 shader_param/sector_size = null
-shader_param/test = null
+shader_param/intensity_multiplier = null
 shader_param/seamless_points_tex = ExtResource( 5 )
 
 [node name="Spatial" type="Spatial"]
@@ -146,36 +147,33 @@ speed_scale = 0.5
 process_material = SubResource( 11 )
 draw_pass_1 = SubResource( 13 )
 
-[node name="Control" type="Control" parent="."]
-margin_right = 617.0
-margin_bottom = 529.0
+[node name="CloudNoiseCreation" type="Control" parent="."]
+margin_right = 849.0
+margin_bottom = 507.0
 script = ExtResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
-MAX_DIST_MULTIPLIER = 0.22
+IMAGE_SIZE_PIXELS = 500
 
-[node name="CloudRect" type="TextureRect" parent="Control"]
+[node name="CloudRect" type="TextureRect" parent="CloudNoiseCreation"]
 material = SubResource( 14 )
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_right = -117.0
-margin_bottom = -29.0
 rect_pivot_offset = Vector2( -261, 20 )
 texture = ExtResource( 5 )
-stretch_mode = 1
 
-[node name="TextureRect2" type="TextureRect" parent="Control"]
+[node name="TextureRect2" type="TextureRect" parent="CloudNoiseCreation"]
 margin_right = 40.0
 margin_bottom = 40.0
 rect_pivot_offset = Vector2( -261, 20 )
 
-[node name="TextureRect3" type="TextureRect" parent="Control"]
+[node name="TextureRect3" type="TextureRect" parent="CloudNoiseCreation"]
 margin_right = 40.0
 margin_bottom = 40.0
 rect_pivot_offset = Vector2( -261, 20 )
 
-[node name="TextureRect4" type="TextureRect" parent="Control"]
+[node name="TextureRect4" type="TextureRect" parent="CloudNoiseCreation"]
 margin_right = 40.0
 margin_bottom = 40.0
 rect_pivot_offset = Vector2( -261, 20 )
