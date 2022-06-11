@@ -6,7 +6,6 @@ var IMAGE_SIZE_PIXELS := 300
 
 var R_POINTS_PER_AXIS := 5
 var R_INTENSITY_MULTIPLIER := 1.0
-
 var R_POINTS_COUNT
 var R_SECTOR_SIZE
 var R_SEAMLESS_POINTS_PER_AXIS
@@ -62,14 +61,12 @@ func _get_property_list():
 	return props
 
 
-
 func setup_texture_creation():
-#	IMAGE_SIZE_PIXELS = 
 	# Set main variables with latest values.
 	R_POINTS_COUNT = R_POINTS_PER_AXIS*R_POINTS_PER_AXIS
-	R_SECTOR_SIZE = IMAGE_SIZE_PIXELS/R_POINTS_PER_AXIS
+	R_SECTOR_SIZE = ceil(IMAGE_SIZE_PIXELS/R_POINTS_PER_AXIS)
 	R_SEAMLESS_POINTS_PER_AXIS = R_POINTS_PER_AXIS+2
-	#
+	# Create default image for TextureRect to work.
 	var texture = ImageTexture.new()
 	var image = Image.new()
 	image.create(IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS, false, 4)
@@ -79,36 +76,36 @@ func setup_texture_creation():
 
 
 # Creates a list of points based in sectors. Used as part of Worley Noise algorithm.
-func create_discrete_sector_points_list():
+func create_discrete_sector_points_list(points_count, sector_size, points_per_axis):
 	var points = []
-	for i in range(R_POINTS_COUNT):
-		var sector_interval_origin = Vector2(R_SECTOR_SIZE*(i%R_POINTS_PER_AXIS), R_SECTOR_SIZE*(i/R_POINTS_PER_AXIS))
+	for i in range(points_count):
+		var sector_interval_origin = Vector2(sector_size*(i%points_per_axis), sector_size*(i/points_per_axis))
 		points.append(Vector2( \
-			int(rand_range(sector_interval_origin.x, sector_interval_origin.x + R_SECTOR_SIZE)), \
+			int(rand_range(sector_interval_origin.x, sector_interval_origin.x + sector_size)), \
 #			int(sector_interval_origin.x), \
-			int(rand_range(sector_interval_origin.y, sector_interval_origin.y + R_SECTOR_SIZE))))
+			int(rand_range(sector_interval_origin.y, sector_interval_origin.y + sector_size))))
 #			int(sector_interval_origin.y)))
 	return points
 
 
 # Creates an ordered list with the provided points along with repeated opposite 
 # ones to allow a seamless texture creation 
-func create_seamless_points(points):
+func create_seamless_points(points, points_per_axis):
 	var seamless_points = []
 	# First line (only mirrored entries)
-	seamless_points.append(points[(R_POINTS_PER_AXIS*R_POINTS_PER_AXIS)-1] + Vector2(-IMAGE_SIZE_PIXELS, -IMAGE_SIZE_PIXELS))
-	for j in range(R_POINTS_PER_AXIS):
-		seamless_points.append(points[R_POINTS_PER_AXIS*(R_POINTS_PER_AXIS-1)+j] + Vector2(0, -IMAGE_SIZE_PIXELS))
-	seamless_points.append(points[R_POINTS_PER_AXIS*(R_POINTS_PER_AXIS-1)] + Vector2(IMAGE_SIZE_PIXELS, -IMAGE_SIZE_PIXELS))
+	seamless_points.append(points[(points_per_axis*points_per_axis)-1] + Vector2(-IMAGE_SIZE_PIXELS, -IMAGE_SIZE_PIXELS))
+	for j in range(points_per_axis):
+		seamless_points.append(points[points_per_axis*(points_per_axis-1)+j] + Vector2(0, -IMAGE_SIZE_PIXELS))
+	seamless_points.append(points[points_per_axis*(points_per_axis-1)] + Vector2(IMAGE_SIZE_PIXELS, -IMAGE_SIZE_PIXELS))
 	# Middle lines (mirrored entries at edges)
-	for i in range(R_POINTS_PER_AXIS):
-		seamless_points.append(points[(R_POINTS_PER_AXIS-1)+R_POINTS_PER_AXIS*i] + Vector2(-IMAGE_SIZE_PIXELS, 0))
-		for j in range(R_POINTS_PER_AXIS*i, R_POINTS_PER_AXIS*i + R_POINTS_PER_AXIS):
+	for i in range(points_per_axis):
+		seamless_points.append(points[(points_per_axis-1)+points_per_axis*i] + Vector2(-IMAGE_SIZE_PIXELS, 0))
+		for j in range(points_per_axis*i, points_per_axis*i + points_per_axis):
 			seamless_points.append(points[j])
-		seamless_points.append(points[R_POINTS_PER_AXIS*i] + Vector2(IMAGE_SIZE_PIXELS, 0))
+		seamless_points.append(points[points_per_axis*i] + Vector2(IMAGE_SIZE_PIXELS, 0))
 	# Final line (only mirrored entries)
-	seamless_points.append(points[R_POINTS_PER_AXIS-1] + Vector2(-IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS))
-	for j in range(R_POINTS_PER_AXIS):
+	seamless_points.append(points[points_per_axis-1] + Vector2(-IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS))
+	for j in range(points_per_axis):
 		seamless_points.append(points[j] + Vector2(0, IMAGE_SIZE_PIXELS))
 	seamless_points.append(points[0] + Vector2(IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS))
 	
@@ -164,6 +161,22 @@ func create_image_cpu(image, seamless_points):
 	image.unlock()
 
 
+# Convert seamless_points_image into a sampler2D texture with xy in rg channel
+func get_seamless_points_representation(seamless_points, seamless_points_per_axis, sector_size):
+	var seamless_points_image: Image = Image.new()
+	seamless_points_image.create(seamless_points_per_axis, seamless_points_per_axis, false, Image.FORMAT_RGB8)
+	seamless_points_image.lock()
+	for y in range(seamless_points_per_axis):
+		for x in range(seamless_points_per_axis):
+			var coord_in_sector_raw = Vector2( \
+				fposmod(seamless_points[x + seamless_points_per_axis*y].x, sector_size), \
+				fposmod(seamless_points[x + seamless_points_per_axis*y].y, sector_size))
+			var coord_in_sector_unit = coord_in_sector_raw / sector_size
+			seamless_points_image.set_pixelv(Vector2(x,y), Color(coord_in_sector_unit.x, coord_in_sector_unit.y, 0, 1))
+	seamless_points_image.unlock()
+	return seamless_points_image
+
+
 # Uses Worley Noise algorithm to generate a cloud texture.
 func cloud_texture_creation():
 	var texture = ImageTexture.new()
@@ -171,28 +184,26 @@ func cloud_texture_creation():
 	setup_texture_creation()
 	
 	# Create list of aproximated random points by discrete sectors 
-	var points = create_discrete_sector_points_list()
+	var points = create_discrete_sector_points_list( \
+		R_POINTS_COUNT, \
+		R_SECTOR_SIZE, \
+		R_POINTS_PER_AXIS)
 	
 	# Create ordered list that includes repeated points from edge sections to make texture seamless.
-	var seamless_points = create_seamless_points(points)
+	var seamless_points = create_seamless_points( \
+		points, \
+		R_POINTS_PER_AXIS)
 	
 	# Create image in CPU
 	# create_image_cpu(image, seamless_points)
 
 	print(R_SECTOR_SIZE)
 	# Convert seamless_points_image into a sampler2D texture with xy in rg channel
-	var seamless_points_image: Image = Image.new()
+	var seamless_points_image = get_seamless_points_representation( \
+		seamless_points, \
+		R_SEAMLESS_POINTS_PER_AXIS, \
+		R_SECTOR_SIZE)
 
-	seamless_points_image.create(R_SEAMLESS_POINTS_PER_AXIS, R_SEAMLESS_POINTS_PER_AXIS, false, Image.FORMAT_RGB8)
-	seamless_points_image.lock()
-	for y in range(R_SEAMLESS_POINTS_PER_AXIS):
-		for x in range(R_SEAMLESS_POINTS_PER_AXIS):
-			var coord_in_sector_raw = Vector2( \
-				fposmod(seamless_points[x + R_SEAMLESS_POINTS_PER_AXIS*y].x, R_SECTOR_SIZE), \
-				fposmod(seamless_points[x + R_SEAMLESS_POINTS_PER_AXIS*y].y, R_SECTOR_SIZE))
-			var coord_in_sector_unit = coord_in_sector_raw / R_SECTOR_SIZE
-			seamless_points_image.set_pixelv(Vector2(x,y), Color(coord_in_sector_unit.x, coord_in_sector_unit.y, 0, 1))
-	seamless_points_image.unlock()
 	texture.create_from_image(seamless_points_image)
 	
 	$CloudRect.material.set_shader_param("texture_size", IMAGE_SIZE_PIXELS)
