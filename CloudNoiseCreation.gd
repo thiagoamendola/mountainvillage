@@ -207,8 +207,8 @@ func cloud_texture_creation():
 	texture.create_from_image(seamless_points_image)
 	
 	$CloudRect.material.set_shader_param("texture_size", IMAGE_SIZE_PIXELS)
-	$CloudRect.material.set_shader_param("sector_size", R_SECTOR_SIZE)
-	$CloudRect.material.set_shader_param("intensity_multiplier", R_INTENSITY_MULTIPLIER)
-	$CloudRect.material.set_shader_param("seamless_points_tex", texture)
+	$CloudRect.material.set_shader_param("r_sector_size", R_SECTOR_SIZE)
+	$CloudRect.material.set_shader_param("r_intensity_multiplier", R_INTENSITY_MULTIPLIER)
+	$CloudRect.material.set_shader_param("r_seamless_points_tex", texture)
 
 	return texture
