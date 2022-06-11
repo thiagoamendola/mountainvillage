@@ -6,18 +6,32 @@ var IMAGE_SIZE_PIXELS := 300
 
 var R_POINTS_PER_AXIS := 5
 var R_INTENSITY_MULTIPLIER := 1.0
+var R_OPACITY := 1.0
 var R_POINTS_COUNT
 var R_SECTOR_SIZE
 var R_SEAMLESS_POINTS_PER_AXIS
+
+var persistence_cache
 
 func _ready():
 	cloud_texture_creation()
 	pass
 
 func _process(delta):
-	if (RUN_IN_EDITOR): # && is_in_editor)
-		cloud_texture_creation()
+	if (RUN_IN_EDITOR):
+		var current_persistence_cache = [ \
+			RUN_IN_EDITOR, \
+			IMAGE_SIZE_PIXELS, \
+			R_POINTS_PER_AXIS, \
+			R_INTENSITY_MULTIPLIER, \
+			R_OPACITY, \
+		]
+		if (current_persistence_cache != persistence_cache):
+			persistence_cache = current_persistence_cache
+			cloud_texture_creation()
+		pass
 	pass
+
 
 func _input(event):
 	if event is InputEventKey and event.pressed:
@@ -40,9 +54,9 @@ func _get_property_list():
 	})
 	props.append({
 		name = "IMAGE_SIZE_PIXELS",
-		type = TYPE_INT
+		type = TYPE_INT,
 	})
-
+	
 	props.append({
 		name = "Texture R",
 		type = TYPE_NIL,
@@ -51,11 +65,21 @@ func _get_property_list():
 	})
 	props.append({
 		name = "R_POINTS_PER_AXIS",
-		type = TYPE_INT
+		type = TYPE_INT,
 	})
 	props.append({
 		name = "R_INTENSITY_MULTIPLIER",
-		type = TYPE_REAL
+		type = TYPE_REAL,
+		usage = PROPERTY_USAGE_DEFAULT,
+		hint = PROPERTY_HINT_RANGE,
+		hint_string = "0.0,2.0"
+	})
+	props.append({
+		name = "R_OPACITY",
+		type = TYPE_REAL,
+		usage = PROPERTY_USAGE_DEFAULT,
+		hint = PROPERTY_HINT_RANGE,
+		hint_string = "0.0,1.0"
 	})
 
 	return props
@@ -209,6 +233,7 @@ func cloud_texture_creation():
 	$CloudRect.material.set_shader_param("texture_size", IMAGE_SIZE_PIXELS)
 	$CloudRect.material.set_shader_param("r_sector_size", R_SECTOR_SIZE)
 	$CloudRect.material.set_shader_param("r_intensity_multiplier", R_INTENSITY_MULTIPLIER)
+	$CloudRect.material.set_shader_param("r_opacity", R_OPACITY)
 	$CloudRect.material.set_shader_param("r_seamless_points_tex", texture)
 
 	return texture

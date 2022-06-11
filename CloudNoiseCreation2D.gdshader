@@ -5,6 +5,7 @@ uniform int texture_size;
 uniform sampler2D r_seamless_points_tex : hint_black;
 uniform int r_sector_size;
 uniform float r_intensity_multiplier;
+uniform float r_opacity;
 
 // Given a vector for pixel position and other for point position, gets the distance
 // and returns if it's smaller than the previous provided value.
@@ -36,10 +37,12 @@ void fragment(){
 	}
 
 	// Get the current color based in the smallest distance found to a point.
-	color = vec4(vec3(1.0) * clamp(r_intensity_multiplier * min_dist / float(r_sector_size), 0.0, 1.0), 1.0);
+	vec4 r_color = vec4(vec3(1.0) * clamp(r_intensity_multiplier * min_dist / float(r_sector_size), 0.0, 1.0), 1.0);
 
 	// Invert color.
-	color = vec4(vec3(1.0) - color.rgb, 1.0);
+	r_color = vec4(vec3(1.0) - r_color.rgb, 1.0);
+
+	color = vec4(r_color.rgb * r_opacity, 1.0);
 
 	COLOR = color;
 }
