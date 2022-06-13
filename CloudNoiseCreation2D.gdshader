@@ -7,6 +7,11 @@ uniform int r_sector_size;
 uniform float r_intensity_multiplier;
 uniform float r_opacity;
 
+uniform sampler2D g_seamless_points_tex;
+uniform int g_sector_size;
+uniform float g_intensity_multiplier;
+uniform float g_opacity;
+
 // Given a vector for pixel position and other for point position, gets the distance
 // and returns if it's smaller than the previous provided value.
 float get_closest_dist(float prev_dist, ivec2 pixel_pos, ivec2 point_pos)
@@ -48,7 +53,9 @@ void fragment(){
 
 	// Calculate texture for R layer.
 	vec4 r_color = get_color_for_channel_tex(r_seamless_points_tex, r_sector_size, r_intensity_multiplier, UV);
+	// Calculate texture for G layer.
+	vec4 g_color = get_color_for_channel_tex(g_seamless_points_tex, g_sector_size, g_intensity_multiplier, UV);
 
-	color = vec4(r_color.rgb * r_opacity, 1.0);
+	color = vec4(r_color.rgb * r_opacity + g_color.rgb * g_opacity, 1.0);
 	COLOR = color;
 }

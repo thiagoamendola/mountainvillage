@@ -5,11 +5,18 @@ var RUN_IN_EDITOR := false
 var IMAGE_SIZE_PIXELS := 300
 
 var R_POINTS_PER_AXIS := 5
-var R_INTENSITY_MULTIPLIER := 1.0
-var R_OPACITY := 1.0
+var R_INTENSITY_MULTIPLIER := 1.1
+var R_OPACITY := .6
 var R_POINTS_COUNT
 var R_SECTOR_SIZE
 var R_SEAMLESS_POINTS_PER_AXIS
+
+var G_POINTS_PER_AXIS := 12
+var G_INTENSITY_MULTIPLIER := .7
+var G_OPACITY := .3
+var G_POINTS_COUNT
+var G_SECTOR_SIZE
+var G_SEAMLESS_POINTS_PER_AXIS
 
 var persistence_cache
 
@@ -25,6 +32,9 @@ func _process(delta):
 			R_POINTS_PER_AXIS, \
 			R_INTENSITY_MULTIPLIER, \
 			R_OPACITY, \
+			G_POINTS_PER_AXIS, \
+			G_INTENSITY_MULTIPLIER, \
+			G_OPACITY, \
 		]
 		if (current_persistence_cache != persistence_cache):
 			persistence_cache = current_persistence_cache
@@ -82,6 +92,31 @@ func _get_property_list():
 		hint_string = "0.0,1.0"
 	})
 
+	props.append({
+		name = "Texture G",
+		type = TYPE_NIL,
+		hint_string = "G_",
+		usage = PROPERTY_USAGE_GROUP | PROPERTY_USAGE_SCRIPT_VARIABLE
+	})
+	props.append({
+		name = "G_POINTS_PER_AXIS",
+		type = TYPE_INT,
+	})
+	props.append({
+		name = "G_INTENSITY_MULTIPLIER",
+		type = TYPE_REAL,
+		usage = PROPERTY_USAGE_DEFAULT,
+		hint = PROPERTY_HINT_RANGE,
+		hint_string = "0.0,2.0"
+	})
+	props.append({
+		name = "G_OPACITY",
+		type = TYPE_REAL,
+		usage = PROPERTY_USAGE_DEFAULT,
+		hint = PROPERTY_HINT_RANGE,
+		hint_string = "0.0,1.0"
+	})
+
 	return props
 
 
@@ -90,6 +125,9 @@ func setup_texture_creation():
 	R_POINTS_COUNT = R_POINTS_PER_AXIS*R_POINTS_PER_AXIS
 	R_SECTOR_SIZE = ceil(IMAGE_SIZE_PIXELS/R_POINTS_PER_AXIS)
 	R_SEAMLESS_POINTS_PER_AXIS = R_POINTS_PER_AXIS+2
+	G_POINTS_COUNT = G_POINTS_PER_AXIS*G_POINTS_PER_AXIS
+	G_SECTOR_SIZE = ceil(IMAGE_SIZE_PIXELS/G_POINTS_PER_AXIS)
+	G_SEAMLESS_POINTS_PER_AXIS = G_POINTS_PER_AXIS+2
 	# Create default image for TextureRect to work.
 	var texture = ImageTexture.new()
 	var image = Image.new()
@@ -203,37 +241,55 @@ func get_seamless_points_representation(seamless_points, seamless_points_per_axi
 
 # Uses Worley Noise algorithm to generate a cloud texture.
 func cloud_texture_creation():
-	var texture = ImageTexture.new()
+	var r_texture = ImageTexture.new()
+	var g_texture = ImageTexture.new()
 	
 	setup_texture_creation()
 	
 	# Create list of aproximated random points by discrete sectors 
-	var points = create_discrete_sector_points_list( \
+	var r_points = create_discrete_sector_points_list( \
 		R_POINTS_COUNT, \
 		R_SECTOR_SIZE, \
 		R_POINTS_PER_AXIS)
+	var g_points = create_discrete_sector_points_list( \
+		G_POINTS_COUNT, \
+		G_SECTOR_SIZE, \
+		G_POINTS_PER_AXIS)
 	
 	# Create ordered list that includes repeated points from edge sections to make texture seamless.
-	var seamless_points = create_seamless_points( \
-		points, \
+	var r_seamless_points = create_seamless_points( \
+		r_points, \
 		R_POINTS_PER_AXIS)
+	var g_seamless_points = create_seamless_points( \
+		g_points, \
+		G_POINTS_PER_AXIS)
 	
 	# Create image in CPU
-	# create_image_cpu(image, seamless_points)
+	# create_image_cpu(image, r_seamless_points)
 
-	print(R_SECTOR_SIZE)
 	# Convert seamless_points_image into a sampler2D texture with xy in rg channel
-	var seamless_points_image = get_seamless_points_representation( \
-		seamless_points, \
+	var r_seamless_points_image = get_seamless_points_representation( \
+		r_seamless_points, \
 		R_SEAMLESS_POINTS_PER_AXIS, \
 		R_SECTOR_SIZE)
-
-	texture.create_from_image(seamless_points_image)
+	r_texture.create_from_image(r_seamless_points_image)
+	var g_seamless_points_image = get_seamless_points_representation( \
+		g_seamless_points, \
+		G_SEAMLESS_POINTS_PER_AXIS, \
+		G_SECTOR_SIZE)
+	g_texture.create_from_image(g_seamless_points_image)
 	
+	# Pass variables to shader.
 	$CloudRect.material.set_shader_param("texture_size", IMAGE_SIZE_PIXELS)
+
 	$CloudRect.material.set_shader_param("r_sector_size", R_SECTOR_SIZE)
 	$CloudRect.material.set_shader_param("r_intensity_multiplier", R_INTENSITY_MULTIPLIER)
 	$CloudRect.material.set_shader_param("r_opacity", R_OPACITY)
-	$CloudRect.material.set_shader_param("r_seamless_points_tex", texture)
+	$CloudRect.material.set_shader_param("r_seamless_points_tex", r_texture)
 
-	return texture
+	$CloudRect.material.set_shader_param("g_sector_size", G_SECTOR_SIZE)
+	$CloudRect.material.set_shader_param("g_intensity_multiplier", G_INTENSITY_MULTIPLIER)
+	$CloudRect.material.set_shader_param("g_opacity", G_OPACITY)
+	$CloudRect.material.set_shader_param("g_seamless_points_tex", g_texture)
+
+	return r_texture
