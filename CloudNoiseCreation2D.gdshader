@@ -1,21 +1,19 @@
 shader_type canvas_item;
 
 uniform int texture_size;
+uniform float persistence;
 
 uniform sampler2D r_seamless_points_tex;
 uniform int r_sector_size;
 uniform float r_intensity_multiplier;
-uniform float r_opacity;
 
 uniform sampler2D g_seamless_points_tex;
 uniform int g_sector_size;
 uniform float g_intensity_multiplier;
-uniform float g_opacity;
 
 uniform sampler2D b_seamless_points_tex;
 uniform int b_sector_size;
 uniform float b_intensity_multiplier;
-uniform float b_opacity;
 
 // Given a vector for pixel position and other for point position, gets the distance
 // and returns if it's smaller than the previous provided value.
@@ -63,6 +61,9 @@ void fragment(){
 	// Calculate texture for B layer.
 	vec4 b_color = get_color_for_channel_tex(b_seamless_points_tex, b_sector_size, b_intensity_multiplier, UV);
 
-	color = vec4(r_color.rgb * r_opacity + g_color.rgb * g_opacity + b_color.rgb * b_opacity, 1.0);
+	vec3 noiseSum = r_color.rgb + (g_color.rgb * persistence) + (b_color.rgb * persistence * persistence);
+    float maxVal = 1.0 + (persistence) + (persistence * persistence);
+
+	color = vec4(noiseSum / maxVal, 1.0);
 	COLOR = color;
 }

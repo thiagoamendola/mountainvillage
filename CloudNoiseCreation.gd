@@ -3,24 +3,22 @@ extends Control
 
 var RUN_IN_EDITOR := false
 var IMAGE_SIZE_PIXELS := 300
+var PERSISTENCE := 1.0
 
 var R_POINTS_PER_AXIS := 5
 var R_INTENSITY_MULTIPLIER := 1.1
-var R_OPACITY := .6
 var R_POINTS_COUNT
 var R_SECTOR_SIZE
 var R_SEAMLESS_POINTS_PER_AXIS
 
 var G_POINTS_PER_AXIS := 12
 var G_INTENSITY_MULTIPLIER := .7
-var G_OPACITY := .3
 var G_POINTS_COUNT
 var G_SECTOR_SIZE
 var G_SEAMLESS_POINTS_PER_AXIS
 
 var B_POINTS_PER_AXIS := 12
 var B_INTENSITY_MULTIPLIER := .7
-var B_OPACITY := .3
 var B_POINTS_COUNT
 var B_SECTOR_SIZE
 var B_SEAMLESS_POINTS_PER_AXIS
@@ -36,15 +34,13 @@ func _process(delta):
 		var current_persistence_cache = [ \
 			RUN_IN_EDITOR, \
 			IMAGE_SIZE_PIXELS, \
+			PERSISTENCE, \
 			R_POINTS_PER_AXIS, \
 			R_INTENSITY_MULTIPLIER, \
-			R_OPACITY, \
 			G_POINTS_PER_AXIS, \
 			G_INTENSITY_MULTIPLIER, \
-			G_OPACITY, \
 			B_POINTS_PER_AXIS, \
 			B_INTENSITY_MULTIPLIER, \
-			B_OPACITY, \
 		]
 		if (current_persistence_cache != persistence_cache):
 			persistence_cache = current_persistence_cache
@@ -76,6 +72,13 @@ func _get_property_list():
 		name = "IMAGE_SIZE_PIXELS",
 		type = TYPE_INT,
 	})
+	props.append({
+		name = "PERSISTENCE",
+		type = TYPE_REAL,
+		usage = PROPERTY_USAGE_DEFAULT,
+		hint = PROPERTY_HINT_RANGE,
+		hint_string = "0.0,1.0"
+	})
 	
 	props.append({
 		name = "Texture R",
@@ -93,13 +96,6 @@ func _get_property_list():
 		usage = PROPERTY_USAGE_DEFAULT,
 		hint = PROPERTY_HINT_RANGE,
 		hint_string = "0.0,2.0"
-	})
-	props.append({
-		name = "R_OPACITY",
-		type = TYPE_REAL,
-		usage = PROPERTY_USAGE_DEFAULT,
-		hint = PROPERTY_HINT_RANGE,
-		hint_string = "0.0,1.0"
 	})
 
 	props.append({
@@ -119,13 +115,6 @@ func _get_property_list():
 		hint = PROPERTY_HINT_RANGE,
 		hint_string = "0.0,2.0"
 	})
-	props.append({
-		name = "G_OPACITY",
-		type = TYPE_REAL,
-		usage = PROPERTY_USAGE_DEFAULT,
-		hint = PROPERTY_HINT_RANGE,
-		hint_string = "0.0,1.0"
-	})
 
 	props.append({
 		name = "Texture B",
@@ -143,13 +132,6 @@ func _get_property_list():
 		usage = PROPERTY_USAGE_DEFAULT,
 		hint = PROPERTY_HINT_RANGE,
 		hint_string = "0.0,2.0"
-	})
-	props.append({
-		name = "B_OPACITY",
-		type = TYPE_REAL,
-		usage = PROPERTY_USAGE_DEFAULT,
-		hint = PROPERTY_HINT_RANGE,
-		hint_string = "0.0,1.0"
 	})
 
 	return props
@@ -334,20 +316,18 @@ func cloud_texture_creation():
 
 	# Pass variables to shader.
 	$CloudRect.material.set_shader_param("texture_size", IMAGE_SIZE_PIXELS)
+	$CloudRect.material.set_shader_param("persistence", PERSISTENCE)
 
 	$CloudRect.material.set_shader_param("r_sector_size", R_SECTOR_SIZE)
 	$CloudRect.material.set_shader_param("r_intensity_multiplier", R_INTENSITY_MULTIPLIER)
-	$CloudRect.material.set_shader_param("r_opacity", R_OPACITY)
 	$CloudRect.material.set_shader_param("r_seamless_points_tex", r_texture)
 
 	$CloudRect.material.set_shader_param("g_sector_size", G_SECTOR_SIZE)
 	$CloudRect.material.set_shader_param("g_intensity_multiplier", G_INTENSITY_MULTIPLIER)
-	$CloudRect.material.set_shader_param("g_opacity", G_OPACITY)
 	$CloudRect.material.set_shader_param("g_seamless_points_tex", g_texture)
 
 	$CloudRect.material.set_shader_param("b_sector_size", B_SECTOR_SIZE)
 	$CloudRect.material.set_shader_param("b_intensity_multiplier", B_INTENSITY_MULTIPLIER)
-	$CloudRect.material.set_shader_param("b_opacity", B_OPACITY)
 	$CloudRect.material.set_shader_param("b_seamless_points_tex", b_texture)
 
 	return r_texture
