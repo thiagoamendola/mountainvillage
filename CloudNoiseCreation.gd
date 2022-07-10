@@ -25,8 +25,13 @@ var B_SEAMLESS_POINTS_PER_AXIS
 
 var persistence_cache
 
+var r_texture
+var g_texture
+var b_texture
+
 func _ready():
 	cloud_texture_creation()
+	render_texture()
 	pass
 
 func _process(delta):
@@ -45,6 +50,7 @@ func _process(delta):
 		if (current_persistence_cache != persistence_cache):
 			persistence_cache = current_persistence_cache
 			cloud_texture_creation()
+			render_texture()
 		pass
 	pass
 
@@ -263,9 +269,9 @@ func get_seamless_points_representation(seamless_points, seamless_points_per_axi
 
 # Uses Worley Noise algorithm to generate a cloud texture.
 func cloud_texture_creation():
-	var r_texture = ImageTexture.new()
-	var g_texture = ImageTexture.new()
-	var b_texture = ImageTexture.new()
+	r_texture = ImageTexture.new()
+	g_texture = ImageTexture.new()
+	b_texture = ImageTexture.new()
 
 	setup_texture_creation()
 	
@@ -314,6 +320,10 @@ func cloud_texture_creation():
 		B_SECTOR_SIZE)
 	b_texture.create_from_image(b_seamless_points_image)
 
+	return
+
+
+func render_texture():
 	# Pass variables to shader.
 	$CloudRect.material.set_shader_param("texture_size", IMAGE_SIZE_PIXELS)
 	$CloudRect.material.set_shader_param("persistence", PERSISTENCE)
