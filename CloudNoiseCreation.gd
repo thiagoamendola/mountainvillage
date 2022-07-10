@@ -23,7 +23,8 @@ var B_POINTS_COUNT
 var B_SECTOR_SIZE
 var B_SEAMLESS_POINTS_PER_AXIS
 
-var persistence_cache
+var rerender_param_cache
+var regenerate_param_cache
 
 var r_texture
 var g_texture
@@ -36,7 +37,7 @@ func _ready():
 
 func _process(delta):
 	if (RUN_IN_EDITOR):
-		var current_persistence_cache = [ \
+		var current_rerender_param_cache = [ \
 			RUN_IN_EDITOR, \
 			IMAGE_SIZE_PIXELS, \
 			PERSISTENCE, \
@@ -47,11 +48,20 @@ func _process(delta):
 			B_POINTS_PER_AXIS, \
 			B_INTENSITY_MULTIPLIER, \
 		]
-		if (current_persistence_cache != persistence_cache):
-			persistence_cache = current_persistence_cache
-			cloud_texture_creation()
+		var current_regenerate_param_cache = [ \
+			RUN_IN_EDITOR, \
+			IMAGE_SIZE_PIXELS, \
+			R_POINTS_PER_AXIS, \
+			G_POINTS_PER_AXIS, \
+			B_POINTS_PER_AXIS, \
+		]
+		
+		if (current_rerender_param_cache != rerender_param_cache):
+			if (current_regenerate_param_cache != regenerate_param_cache):
+				regenerate_param_cache = current_regenerate_param_cache
+				cloud_texture_creation()
+			rerender_param_cache = current_rerender_param_cache
 			render_texture()
-		pass
 	pass
 
 
