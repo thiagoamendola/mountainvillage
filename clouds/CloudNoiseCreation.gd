@@ -31,8 +31,11 @@ var g_texture
 var b_texture
 
 func _ready():
+	var start_time = OS.get_unix_time()
 	cloud_texture_creation()
 	render_texture()
+	var end_time = OS.get_unix_time()
+	print(end_time - start_time)
 	pass
 
 func _process(delta):
