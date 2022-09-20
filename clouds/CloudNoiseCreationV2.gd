@@ -27,11 +27,6 @@ var B_SEAMLESS_POINTS_PER_AXIS
 var rerender_param_cache
 var regenerate_param_cache
 
-var r_texture
-var r_points
-var g_texture
-var b_texture
-
 var noise_texture
 
 func _ready():
@@ -277,6 +272,16 @@ func get_adjacent_sector_points(seamless_points, current_voxel, sector_size, poi
 	return adjacent_points
 
 
+func get_color_for_channel(current_voxel, points, sector_size, points_per_axis, intensity_multiplier):
+	# Calculate min dist 
+	var min_dist = INF
+	for adj_point in get_adjacent_sector_points(points, current_voxel, sector_size, points_per_axis):
+		var cur_dist = adj_point.distance_to(current_voxel)
+		if cur_dist < min_dist:
+			min_dist = cur_dist
+	# Get final value for channel
+	return clamp(intensity_multiplier * min_dist / IMAGE_SIZE_PIXELS, 0.0, 1.0)
+
 
 func cloud_texture_creation():
 	print("START")
@@ -285,9 +290,15 @@ func cloud_texture_creation():
 	var full_texture = setup_texture_creation();
 
 	# Step 1: Create points for each channel
-	r_points = create_discrete_sector_points( \
+	var r_points = create_discrete_sector_points( \
 		R_SECTOR_SIZE, \
-		R_POINTS_PER_AXIS)	
+		R_POINTS_PER_AXIS)
+	var g_points = create_discrete_sector_points( \
+		G_SECTOR_SIZE, \
+		G_POINTS_PER_AXIS)
+	var b_points = create_discrete_sector_points( \
+		B_SECTOR_SIZE, \
+		B_POINTS_PER_AXIS)
 
 	# Step 2: Render into 3D sampler
 
@@ -295,7 +306,6 @@ func cloud_texture_creation():
 	print(end_time - start_time)
 	print("Start 3d sampler")
 
-	var MAX_DIST = int(IMAGE_SIZE_PIXELS)
 	for z in range(IMAGE_SIZE_PIXELS):
 		var layer = full_texture.get_layer_data(z)
 		layer.lock()
@@ -303,23 +313,29 @@ func cloud_texture_creation():
 		#-> Multithread this? IDEA: create a shared pool of indexes and multiple threads. Each thread pops a value from the pool and processes it. Once done, it pops the next index until the list is over. Mutex is required for popping the pool
 		for x in range(IMAGE_SIZE_PIXELS):
 			for y in range(IMAGE_SIZE_PIXELS):
-				# for each channel
-
-				#<- 
-				# Calculate min dist 
-				var min_dist = INF
 				var current_voxel = Vector3(x, y, z)
-				for adj_point in get_adjacent_sector_points(r_points, current_voxel, R_SECTOR_SIZE, R_POINTS_PER_AXIS):
-					var cur_dist = adj_point.distance_to(current_voxel)
-					if cur_dist < min_dist:
-						min_dist = cur_dist	
-				# Get final value for channel
-				var final_value = clamp(R_INTENSITY_MULTIPLIER * min_dist / MAX_DIST, 0.0, 1.0)
-
+				
+				var r_final_value = get_color_for_channel( \
+					current_voxel, \
+					r_points, \
+					R_SECTOR_SIZE, \
+					R_POINTS_PER_AXIS, \
+					R_INTENSITY_MULTIPLIER)
+				var g_final_value = get_color_for_channel( \
+					current_voxel, \
+					g_points, \
+					G_SECTOR_SIZE, \
+					G_POINTS_PER_AXIS, \
+					G_INTENSITY_MULTIPLIER)
+				var b_final_value = get_color_for_channel( \
+					current_voxel, \
+					b_points, \
+					B_SECTOR_SIZE, \
+					B_POINTS_PER_AXIS, \
+					B_INTENSITY_MULTIPLIER)
 				# Write to sampler
-				layer.set_pixel(x, y, Color(1-final_value, 1-final_value, 1-final_value))
+				layer.set_pixel(x, y, Color(1-r_final_value, 1-g_final_value, 1-b_final_value))
 
-		
 		layer.unlock()
 		full_texture.set_layer_data(layer, z)
 
