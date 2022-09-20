@@ -186,14 +186,14 @@ func setup_texture_creation():
 		var image = Image.new()
 		image.create(IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS, false, Image.FORMAT_RGBA8)
 		image.lock()
-		image.fill(Color(PERSISTENCE, PERSISTENCE, 0.0))
+		image.fill(Color(0, 0, 0))
 		image.unlock()
 		texture.set_layer_data(image, i)
 	return texture
 
 
 # Creates a list of points based in sectors. Used as part of Worley Noise algorithm.
-func create_discrete_sector_points(points_count, sector_size, points_per_axis):
+func create_discrete_sector_points(sector_size, points_per_axis):
 	# Create 3D array, slightly bigger to cover mirrored edges
 	var seamless_axis = points_per_axis+2
 	var end = points_per_axis-1
@@ -259,48 +259,75 @@ func create_discrete_sector_points(points_count, sector_size, points_per_axis):
 	return points
 
 
-# REMOVE
-# Convert points_image into a sampler2D texture with xy in rg channel
-func get_points_representation(points, points_per_axis, sector_size):
-	var points_image: Image = Image.new()
-	points_image.create(points_per_axis, points_per_axis, false, Image.FORMAT_RGB8)
-	points_image.lock()
-	var current_layer = int(SLICE * (points_per_axis-1))
-	for y in range(points_per_axis):
-		for x in range(points_per_axis):
-			var coord_in_sector_raw = Vector2( \
-				fposmod(points[x][y][current_layer].x, sector_size), \
-				fposmod(points[x][y][current_layer].y, sector_size))
-			var coord_in_sector_unit = coord_in_sector_raw / sector_size
-			points_image.set_pixelv(Vector2(x,y), Color(coord_in_sector_unit.x, coord_in_sector_unit.y, 0, 1))
-	points_image.unlock()
-	return points_image
+# Get points for current and all neighbor sectors.
+func get_adjacent_sector_points(seamless_points, current_voxel, sector_size, points_per_axis):
+	var adjacent_points = []
+	# Get current sector and apply offset to match seamless array
+	var current_sector_vec = Vector3( \
+		min(int(current_voxel.x/sector_size) + 1, points_per_axis-1), \
+		min(int(current_voxel.y/sector_size) + 1, points_per_axis-1), \
+		min(int(current_voxel.z/sector_size) + 1, points_per_axis-1))
+	# Add all adjacent sector points
+	for x in range(-1,2):
+		for y in range(-1,2):
+			for z in range(-1,2):
+				adjacent_points.append(seamless_points[current_sector_vec.x+x] \
+													  [current_sector_vec.y+y] \
+													  [current_sector_vec.z+z])
+	return adjacent_points
+
 
 
 func cloud_texture_creation():
+	print("START")
+	var start_time = OS.get_unix_time()
+
 	var full_texture = setup_texture_creation();
 
 	# Step 1: Create points for each channel
-
 	r_points = create_discrete_sector_points( \
-		R_POINTS_COUNT, \
 		R_SECTOR_SIZE, \
 		R_POINTS_PER_AXIS)	
 
 	# Step 2: Render into 3D sampler
 
-	# for each voxel
+	var end_time = OS.get_unix_time()
+	print(end_time - start_time)
+	print("Start 3d sampler")
 
-	# for each channel
+	var MAX_DIST = int(IMAGE_SIZE_PIXELS)
+	for z in range(IMAGE_SIZE_PIXELS):
+		var layer = full_texture.get_layer_data(z)
+		layer.lock()
 
-	# Calculate min dist 
+		#-> Multithread this? IDEA: create a shared pool of indexes and multiple threads. Each thread pops a value from the pool and processes it. Once done, it pops the next index until the list is over. Mutex is required for popping the pool
+		for x in range(IMAGE_SIZE_PIXELS):
+			for y in range(IMAGE_SIZE_PIXELS):
+				# for each channel
 
-	# Write to sampler
+				#<- 
+				# Calculate min dist 
+				var min_dist = INF
+				var current_voxel = Vector3(x, y, z)
+				for adj_point in get_adjacent_sector_points(r_points, current_voxel, R_SECTOR_SIZE, R_POINTS_PER_AXIS):
+					var cur_dist = adj_point.distance_to(current_voxel)
+					if cur_dist < min_dist:
+						min_dist = cur_dist	
+				# Get final value for channel
+				var final_value = clamp(R_INTENSITY_MULTIPLIER * min_dist / MAX_DIST, 0.0, 1.0)
 
+				# Write to sampler
+				layer.set_pixel(x, y, Color(1-final_value, 1-final_value, 1-final_value))
+
+		
+		layer.unlock()
+		full_texture.set_layer_data(layer, z)
 
 	# Step 3: Display
 
-	# Grab the first layer and throw in a screen texture 
+	end_time = OS.get_unix_time()
+	print(end_time - start_time)
+	print("3d sampler completed!")
 
 	return full_texture
 
@@ -310,12 +337,5 @@ func display_texture3d_slice(texture):
 	var current_layer = int(SLICE * (IMAGE_SIZE_PIXELS-1))
 	display_texture.create_from_image(texture.data['layers'][current_layer])
 
-	r_texture = ImageTexture.new()
-	var r_points_image = get_points_representation( \
-		r_points, \
-		R_SEAMLESS_POINTS_PER_AXIS, \
-		R_SECTOR_SIZE)
-	r_texture.create_from_image(r_points_image)
-
-	$TextureVisualizer.texture = r_texture # display_texture
+	$TextureVisualizer.texture = display_texture
 
