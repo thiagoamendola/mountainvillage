@@ -1,7 +1,6 @@
-shader_type spatial;
-render_mode unshaded;
+shader_type canvas_item;
 
-uniform sampler2D noise_texture : hint_black_albedo;
+uniform sampler3D noise_texture : hint_black_albedo;
 uniform vec3 boundMin;
 uniform vec3 boundMax;
 
@@ -24,6 +23,7 @@ vec2 rayBoxDst(vec3 rayOrigin, vec3 rayDir) {
     return vec2(dstToBox, dstToInsideBox);
 }
 
+
 float sampleDensity (vec3 position) {
     return 1.0;
 }
@@ -45,10 +45,10 @@ void fragment() {
     // Get total density
     float totalDensity = 0.0;
     float distanceTravelled = 0.0;
-//    while (distanceTravelled < dstLimit) {
-    for (int i=0; i<NUM_STEPS; i++) {
-//        vec3 curPos = cameraPos + cameraDir * (dstToBox + distanceTravelled);
-		vec3 curPos;
+    while (distanceTravelled < dstLimit) {
+    // for (int i=0; i<NUM_STEPS; i++) {
+        vec3 curPos = cameraPos + cameraDir * (dstToBox + distanceTravelled);
+        // vec3 curPos;
         totalDensity += sampleDensity(curPos);
         distanceTravelled += stepSize;
     }
@@ -57,8 +57,13 @@ void fragment() {
 
     // float transmittance = exp(-totalDensity);
     // float transmittance = exp(-dstToInsideBox/.0010); 
-    float transmittance = min(1.0, totalDensity); 
-    ALBEDO = vec3(transmittance);
+//    float transmittance = min(1.0, totalDensity); 
+    float transmittance = 0.0;
+	if (dstToBox < 10.0) {
+    	transmittance = 1.0;
+	}
+//    ALBEDO = vec3(transmittance);
+
 //    ALBEDO = vec3(totalDensity);
 
 

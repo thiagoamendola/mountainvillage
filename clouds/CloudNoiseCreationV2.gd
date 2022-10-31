@@ -1,5 +1,5 @@
 tool
-extends Control
+extends Spatial
 
 var RUN_IN_EDITOR := false
 var IMAGE_SIZE_PIXELS := 128
@@ -35,6 +35,8 @@ func _ready():
 	pass
 
 func _process(delta):
+	update_camera()
+
 	if (RUN_IN_EDITOR):
 		var current_rerender_param_cache = [ \
 			RUN_IN_EDITOR, \
@@ -67,7 +69,7 @@ func _process(delta):
 
 func _input(event):
 	if event is InputEventKey and event.pressed:
-		if event.scancode == KEY_SPACE:
+		if event.scancode == KEY_R:
 			noise_texture = cloud_texture_creation()
 			display_texture3d_slice(noise_texture)
 	pass
@@ -354,4 +356,31 @@ func display_texture3d_slice(texture):
 	display_texture.create_from_image(texture.data['layers'][current_layer])
 
 	$TextureVisualizer.texture = display_texture
+
+	var mat = $ScreenRect.material
+	var volume_aabb = $CloudVolume.get_aabb();
+	var boundMin = Vector3($CloudVolume.global_translation) + \
+		volume_aabb.position * volume_aabb.size * $CloudVolume.scale / 2
+	var boundMax = Vector3($CloudVolume.global_translation) + \
+		volume_aabb.end * volume_aabb.size * $CloudVolume.scale / 2
+	mat.set_shader_param("boundMin", boundMin)
+	mat.set_shader_param("boundMax", boundMax)
+
+	print("params:")
+	print(boundMin)
+	print(boundMax)
+
+	update_camera()
+
+#	var mat = $CloudVolume.get_surface_material(0)
+#	mat.set_shader_param("noise_texture", texture)
+
+func update_camera():
+	var mat = $ScreenRect.material
+	var camera = get_viewport().get_camera()
+	mat.set_shader_param("cameraPos", camera.global_translation)
+	mat.set_shader_param("cameraDirX", camera.get_global_transform().basis.x)
+	mat.set_shader_param("cameraDirY", camera.get_global_transform().basis.y)
+	mat.set_shader_param("cameraDirZ", camera.get_global_transform().basis.z)
+	# print(camera.get_global_transform().basis.z)
 
