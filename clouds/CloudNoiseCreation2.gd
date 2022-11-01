@@ -31,7 +31,7 @@ var noise_texture
 
 func _ready():
 	noise_texture = cloud_texture_creation()
-	display_texture3d_slice(noise_texture)
+	display_texture3d(noise_texture)
 	pass
 
 func _process(delta):
@@ -63,7 +63,7 @@ func _process(delta):
 				regenerate_param_cache = current_regenerate_param_cache
 				noise_texture = cloud_texture_creation()
 			rerender_param_cache = current_rerender_param_cache
-			display_texture3d_slice(noise_texture)
+			display_texture3d(noise_texture)
 
 	pass
 
@@ -71,7 +71,7 @@ func _input(event):
 	if event is InputEventKey and event.pressed:
 		if event.scancode == KEY_R:
 			noise_texture = cloud_texture_creation()
-			display_texture3d_slice(noise_texture)
+			display_texture3d(noise_texture)
 	pass
 
 func _get_property_list():
@@ -350,14 +350,14 @@ func cloud_texture_creation():
 	return full_texture
 
 
-func display_texture3d_slice(texture):
+func display_texture3d(texture):
 	var display_texture = ImageTexture.new()
 	var current_layer = int(SLICE * (IMAGE_SIZE_PIXELS-1))
 	display_texture.create_from_image(texture.data['layers'][current_layer])
 
 	$TextureVisualizer.texture = display_texture
 
-	var mat = $ScreenRect.material
+	var mat = get_viewport().get_camera().get_node("ShaderQuad").get_active_material(0)
 	var volume_aabb = $CloudVolume.get_aabb();
 	var boundMin = Vector3($CloudVolume.global_translation) + \
 		volume_aabb.position * volume_aabb.size * $CloudVolume.scale / 2
@@ -376,7 +376,7 @@ func display_texture3d_slice(texture):
 #	mat.set_shader_param("noise_texture", texture)
 
 func update_camera():
-	var mat = $ScreenRect.material
+	var mat = get_viewport().get_camera().get_node("ShaderQuad").get_active_material(0)
 	var camera = get_viewport().get_camera()
 	mat.set_shader_param("cameraPos", camera.global_translation)
 	mat.set_shader_param("cameraDirX", camera.get_global_transform().basis.x)

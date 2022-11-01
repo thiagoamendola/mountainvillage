@@ -76,7 +76,6 @@ void fragment() {
 
 	// Get world coordinates for fragment direction
 	vec2 imageRes = 1.0 / SCREEN_PIXEL_SIZE.xy;
-//	color.rgb = vec3(imageRes.x / 1024., imageRes.y / 600., 0.); 
 	vec3 fragRayDirRaw = rayDirection(90.0, imageRes, FRAGCOORD.xy);
 	// color.rgb = vec3(abs(fragRayDir.xy), 0.0); // Useful to see the ray direction diff. SEEMS PARTIALLY WRONG
 	mat3 cameraToWorldMatrix;
