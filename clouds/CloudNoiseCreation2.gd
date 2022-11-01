@@ -35,7 +35,7 @@ func _ready():
 	pass
 
 func _process(delta):
-	update_camera()
+	display_texture3d(noise_texture)
 
 	if (RUN_IN_EDITOR):
 		var current_rerender_param_cache = [ \
@@ -357,7 +357,7 @@ func display_texture3d(texture):
 
 	$TextureVisualizer.texture = display_texture
 
-	var mat = get_viewport().get_camera().get_node("ShaderQuad").get_active_material(0)
+	var mat = get_node("ShaderQuad").get_active_material(0)
 	var volume_aabb = $CloudVolume.get_aabb();
 	var boundMin = Vector3($CloudVolume.global_translation) + \
 		volume_aabb.position * volume_aabb.size * $CloudVolume.scale / 2
@@ -369,18 +369,4 @@ func display_texture3d(texture):
 	print("params:")
 	print(boundMin)
 	print(boundMax)
-
-	update_camera()
-
-#	var mat = $CloudVolume.get_surface_material(0)
-#	mat.set_shader_param("noise_texture", texture)
-
-func update_camera():
-	var mat = get_viewport().get_camera().get_node("ShaderQuad").get_active_material(0)
-	var camera = get_viewport().get_camera()
-	mat.set_shader_param("cameraPos", camera.global_translation)
-	mat.set_shader_param("cameraDirX", camera.get_global_transform().basis.x)
-	mat.set_shader_param("cameraDirY", camera.get_global_transform().basis.y)
-	mat.set_shader_param("cameraDirZ", camera.get_global_transform().basis.z)
-	# print(camera.get_global_transform().basis.z)
 
