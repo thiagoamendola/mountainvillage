@@ -52,8 +52,9 @@ void fragment() {
 	vec2 rayBoxInfo = rayBoxDst(cameraPos, fragDir);
 	float dstToBox = rayBoxInfo.x;
 	float dstToInsideBox = rayBoxInfo.y;
-	bool rayHitBox = dstToInsideBox > 0.0;
-	if (rayHitBox) {
+	
+	bool rayHitBox = dstToInsideBox > 0.0 && dstToBox < linear_depth;
+	if (rayHitBox) {	
 		color.rgb = vec3(1.0, 0.0, 0.0);
 	}
 	

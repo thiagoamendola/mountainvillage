@@ -35,7 +35,7 @@ func _ready():
 	pass
 
 func _process(delta):
-	display_texture3d(noise_texture)
+	# display_texture3d(noise_texture)
 
 	if (RUN_IN_EDITOR):
 		var current_rerender_param_cache = [ \
@@ -366,7 +366,4 @@ func display_texture3d(texture):
 	mat.set_shader_param("boundMin", boundMin)
 	mat.set_shader_param("boundMax", boundMax)
 
-	print("params:")
-	print(boundMin)
-	print(boundMax)
 
