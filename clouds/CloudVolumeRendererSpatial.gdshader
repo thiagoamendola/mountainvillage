@@ -1,6 +1,9 @@
 shader_type spatial;
 render_mode unshaded;
 
+const int sampleChecks = 10;
+// const float stepSize = 0.01;
+
 uniform sampler3D noise_texture : hint_black_albedo;
 uniform vec3 boundMin;
 uniform vec3 boundMax;
@@ -25,7 +28,7 @@ vec2 rayBoxDst(vec3 rayOrigin, vec3 rayDir) {
 }
 
 float sampleDensity (vec3 position) {
-	return 1.0;
+	return 0.5;
 }
 
 void vertex() {
@@ -52,11 +55,22 @@ void fragment() {
 	vec2 rayBoxInfo = rayBoxDst(cameraPos, fragDir);
 	float dstToBox = rayBoxInfo.x;
 	float dstToInsideBox = rayBoxInfo.y;
-	
 	bool rayHitBox = dstToInsideBox > 0.0 && dstToBox < linear_depth;
 	if (rayHitBox) {	
-		color.rgb = vec3(1.0, 0.0, 0.0);
+		// color.rgb = vec3(1.0, 0.0, 0.0);
+
+		//
+		float totalDensity = 0.0;
+		float stepSize = dstToInsideBox / float(sampleChecks);
+
+		for (int i; i < sampleChecks; i++) {
+			vec3 currentPosition = cameraPos + fragDir * (float(i) * stepSize);
+			totalDensity += sampleDensity(currentPosition) * stepSize;
+		}
+
+		color = vec4(vec3(1.0, 0.0, 0.0), totalDensity);
 	}
 	
 	ALBEDO = color.rgb;
+	ALPHA = color.a;
 }
