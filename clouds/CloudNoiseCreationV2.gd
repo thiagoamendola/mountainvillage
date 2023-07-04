@@ -354,7 +354,6 @@ func display_texture3d(texture):
 	var display_texture = ImageTexture.new()
 	var current_layer = int(SLICE * (IMAGE_SIZE_PIXELS-1))
 	display_texture.create_from_image(texture.data['layers'][current_layer])
-
 	$TextureVisualizer.texture = display_texture
 
 	var mat = get_node("ShaderQuad").get_active_material(0)
@@ -363,6 +362,7 @@ func display_texture3d(texture):
 		volume_aabb.position * volume_aabb.size * $CloudVolume.scale / 2
 	var boundMax = Vector3($CloudVolume.global_translation) + \
 		volume_aabb.end * volume_aabb.size * $CloudVolume.scale / 2
+	mat.set_shader_param("noise_texture", texture)
 	mat.set_shader_param("boundMin", boundMin)
 	mat.set_shader_param("boundMax", boundMax)
 

@@ -28,7 +28,14 @@ vec2 rayBoxDst(vec3 rayOrigin, vec3 rayDir) {
 }
 
 float sampleDensity (vec3 position) {
-	return 0.5;
+	float cloudScale = 1.0;
+	float cloudOffset = 0.0;
+	float densityThreshold = 0.6;
+	float densityMultiplier = 5.0;
+	vec3 uvw = position + cloudScale * 10.0 + cloudOffset;
+	float textureValue = texture(noise_texture, uvw).r;
+	float density = max(0, textureValue - densityThreshold) * densityMultiplier; 
+	return density;
 }
 
 void vertex() {
@@ -68,7 +75,11 @@ void fragment() {
 			totalDensity += sampleDensity(currentPosition) * stepSize;
 		}
 
-		color = vec4(vec3(1.0, 0.0, 0.0), totalDensity);
+		//
+		float transmittance = exp(-totalDensity);
+
+
+		color = vec4(vec3(1.0, 0.0, 0.0), 1.0 - transmittance);
 	}
 	
 	ALBEDO = color.rgb;
