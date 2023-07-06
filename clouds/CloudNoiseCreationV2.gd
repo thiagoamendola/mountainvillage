@@ -28,6 +28,7 @@ var rerender_param_cache
 var regenerate_param_cache
 
 var noise_texture
+var generation_time := 0.0
 
 func _ready():
 	noise_texture = cloud_texture_creation()
@@ -287,7 +288,7 @@ func get_color_for_channel(current_voxel, points, sector_size, points_per_axis, 
 
 func cloud_texture_creation():
 	print("START")
-	var start_time = OS.get_unix_time()
+	var start_time = float(OS.get_system_time_msecs())
 
 	var full_texture = setup_texture_creation();
 
@@ -304,8 +305,8 @@ func cloud_texture_creation():
 
 	# Step 2: Render into 3D sampler
 
-	var end_time = OS.get_unix_time()
-	print(end_time - start_time)
+	var end_time = float(OS.get_system_time_msecs())
+	print((end_time - start_time)/1000)
 	print("Start 3d sampler")
 
 	for z in range(IMAGE_SIZE_PIXELS):
@@ -343,8 +344,9 @@ func cloud_texture_creation():
 
 	# Step 3: Display
 
-	end_time = OS.get_unix_time()
-	print(end_time - start_time)
+	end_time = float(OS.get_system_time_msecs())
+	generation_time = (end_time - start_time) / 1000
+	print(generation_time)
 	print("3d sampler completed!")
 
 	return full_texture
@@ -354,7 +356,12 @@ func display_texture3d(texture):
 	var display_texture = ImageTexture.new()
 	var current_layer = int(SLICE * (IMAGE_SIZE_PIXELS-1))
 	display_texture.create_from_image(texture.data['layers'][current_layer])
-	$TextureVisualizer.texture = display_texture
+
+	$DebugUI/TextureVisualizer.texture = display_texture
+	var texture_details = "time = {generation_time}s"
+	$DebugUI/TextureInfo.text = texture_details.format({
+		"generation_time": generation_time
+	})
 
 	var mat = get_node("ShaderQuad").get_active_material(0)
 	var volume_aabb = $CloudVolume.get_aabb();
@@ -365,5 +372,3 @@ func display_texture3d(texture):
 	mat.set_shader_param("noise_texture", texture)
 	mat.set_shader_param("boundMin", boundMin)
 	mat.set_shader_param("boundMax", boundMax)
-
-
