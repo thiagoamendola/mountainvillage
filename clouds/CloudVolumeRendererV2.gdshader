@@ -1,9 +1,11 @@
 shader_type canvas_item;
 render_mode unshaded;
 
+// DEPRECATED -------------------------------------------
+
 uniform sampler3D noise_texture : hint_black_albedo;
-uniform vec3 boundMin;
-uniform vec3 boundMax;
+uniform vec3 bound_min;
+uniform vec3 bound_max;
 
 uniform vec3 cameraPos;
 uniform vec3 cameraDirZ;
@@ -12,8 +14,8 @@ uniform vec3 cameraDirY;
 
 
 vec2 rayBoxDst(vec3 rayOrigin, vec3 rayDir) {
-	vec3 t0 = (boundMin - rayOrigin) / rayDir;
-	vec3 t1 = (boundMax - rayOrigin) / rayDir;
+	vec3 t0 = (bound_min - rayOrigin) / rayDir;
+	vec3 t1 = (bound_max - rayOrigin) / rayDir;
 	vec3 tmin = min(t0, t1);
 	vec3 tmax = max(t0, t1);
 
@@ -31,8 +33,8 @@ vec2 rayBoxDst(vec3 rayOrigin, vec3 rayDir) {
 }
 
 bool insideBox(vec3 target) {
-	vec3 bMin = min(boundMin, boundMax);
-	vec3 bMax = max(boundMin, boundMax);
+	vec3 bMin = min(bound_min, bound_max);
+	vec3 bMax = max(bound_min, bound_max);
 	return (target.x > bMin.x && target.x < bMax.x) &&
 			(target.y > bMin.y && target.y < bMax.y) &&
 			(target.z > bMin.z && target.z < bMax.z);

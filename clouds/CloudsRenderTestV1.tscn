@@ -14,8 +14,8 @@
 
 [sub_resource type="ShaderMaterial" id=5]
 shader = ExtResource( 1 )
-shader_param/boundMin = Vector3( -1.93899, 1.43951, -1 )
-shader_param/boundMax = Vector3( 2.06101, 3.43951, 1 )
+shader_param/bound_min = Vector3( -1.93899, 1.43951, -1 )
+shader_param/bound_max = Vector3( 2.06101, 3.43951, 1 )
 shader_param/cameraPos = Vector3( 0.0690393, 2.68748, 5.6578 )
 shader_param/cameraDirZ = Vector3( 0, 0, 1 )
 shader_param/cameraDirX = Vector3( 1, 0, 0 )

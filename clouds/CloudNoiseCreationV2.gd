@@ -24,6 +24,8 @@ var B_POINTS_COUNT
 var B_SECTOR_SIZE
 var B_SEAMLESS_POINTS_PER_AXIS
 
+var SLICE_MODE := false
+
 var rerender_param_cache
 var regenerate_param_cache
 
@@ -36,14 +38,15 @@ func _ready():
 	pass
 
 func _process(delta):
-	# display_texture3d(noise_texture)
 
 	if (RUN_IN_EDITOR):
+		# Not working????
 		var current_rerender_param_cache = [ \
 			RUN_IN_EDITOR, \
 			IMAGE_SIZE_PIXELS, \
 			PERSISTENCE, \
 			SLICE, \
+			SLICE_MODE, \
 			R_POINTS_PER_AXIS, \
 			R_INTENSITY_MULTIPLIER, \
 			G_POINTS_PER_AXIS, \
@@ -159,6 +162,11 @@ func _get_property_list():
 		usage = PROPERTY_USAGE_DEFAULT,
 		hint = PROPERTY_HINT_RANGE,
 		hint_string = "0.0,2.0"
+	})
+
+	props.append({
+		name = "SLICE_MODE",
+		type = TYPE_BOOL
 	})
 
 	return props
@@ -365,10 +373,13 @@ func display_texture3d(texture):
 
 	var mat = get_node("ShaderQuad").get_active_material(0)
 	var volume_aabb = $CloudVolume.get_aabb();
-	var boundMin = Vector3($CloudVolume.global_translation) + \
+	var bound_min = Vector3($CloudVolume.global_translation) + \
 		volume_aabb.position * volume_aabb.size * $CloudVolume.scale / 2
-	var boundMax = Vector3($CloudVolume.global_translation) + \
+	var bound_max = Vector3($CloudVolume.global_translation) + \
 		volume_aabb.end * volume_aabb.size * $CloudVolume.scale / 2
 	mat.set_shader_param("noise_texture", texture)
-	mat.set_shader_param("boundMin", boundMin)
-	mat.set_shader_param("boundMax", boundMax)
+	mat.set_shader_param("bound_min", bound_min)
+	mat.set_shader_param("bound_max", bound_max)
+	mat.set_shader_param("slice_mode", SLICE_MODE)
+	mat.set_shader_param("slice", SLICE)
+

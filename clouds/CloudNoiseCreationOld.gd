@@ -359,16 +359,16 @@ func display_texture3d_slice(texture):
 
 	var mat = $ScreenRect.material
 	var volume_aabb = $CloudVolume.get_aabb();
-	var boundMin = Vector3($CloudVolume.global_translation) + \
+	var bound_min = Vector3($CloudVolume.global_translation) + \
 		volume_aabb.position * volume_aabb.size * $CloudVolume.scale / 2
-	var boundMax = Vector3($CloudVolume.global_translation) + \
+	var bound_max = Vector3($CloudVolume.global_translation) + \
 		volume_aabb.end * volume_aabb.size * $CloudVolume.scale / 2
-	mat.set_shader_param("boundMin", boundMin)
-	mat.set_shader_param("boundMax", boundMax)
+	mat.set_shader_param("bound_min", bound_min)
+	mat.set_shader_param("bound_max", bound_max)
 
 	print("params:")
-	print(boundMin)
-	print(boundMax)
+	print(bound_min)
+	print(bound_max)
 
 	update_camera()
 
