@@ -32,7 +32,17 @@ var regenerate_param_cache
 var noise_texture
 var generation_time := 0.0
 
+"""
+We need to aplit this into other files. here's a list:
+
+- Current one: will be the Manager. Instantiates others, hangles Godot editor vars and calls stuff
+- CubeTextureCreator
+- TextureUIHelper
+"""
+
 func _ready():
+    # Instantiation and grab ref to UI
+	# Generate cube texture and display 
 	noise_texture = cloud_texture_creation()
 	display_texture3d(noise_texture)
 	pass
@@ -71,6 +81,7 @@ func _process(delta):
 
 	pass
 
+# Maybe move to UI?
 func _input(event):
 	if event is InputEventKey and event.pressed:
 		if event.scancode == KEY_R:
@@ -171,7 +182,7 @@ func _get_property_list():
 
 	return props
 
-
+# Move to TCT
 func setup_texture_creation():
 	# Set main variables with latest values.
 	R_POINTS_COUNT = R_POINTS_PER_AXIS*R_POINTS_PER_AXIS*R_POINTS_PER_AXIS
@@ -197,7 +208,7 @@ func setup_texture_creation():
 		texture.set_layer_data(image, i)
 	return texture
 
-
+# Move to CTC
 # Creates a list of points based in sectors. Used as part of Worley Noise algorithm.
 func create_discrete_sector_points(sector_size, points_per_axis):
 	# Create 3D array, slightly bigger to cover mirrored edges
@@ -264,7 +275,7 @@ func create_discrete_sector_points(sector_size, points_per_axis):
 
 	return points
 
-
+# Move to CTC
 # Get points for current and all neighbor sectors.
 func get_adjacent_sector_points(seamless_points, current_voxel, sector_size, points_per_axis):
 	var adjacent_points = []
@@ -282,7 +293,7 @@ func get_adjacent_sector_points(seamless_points, current_voxel, sector_size, poi
 													  [current_sector_vec.z+z])
 	return adjacent_points
 
-
+# Move to CTC
 func get_color_for_channel(current_voxel, points, sector_size, points_per_axis, intensity_multiplier):
 	# Calculate min dist 
 	var min_dist = INF
@@ -293,7 +304,7 @@ func get_color_for_channel(current_voxel, points, sector_size, points_per_axis, 
 	# Get final value for channel
 	return clamp(intensity_multiplier * min_dist / IMAGE_SIZE_PIXELS, 0.0, 1.0)
 
-
+# Move to CTC
 func cloud_texture_creation():
 	print("START")
 	var start_time = float(OS.get_system_time_msecs())
@@ -359,7 +370,7 @@ func cloud_texture_creation():
 
 	return full_texture
 
-
+# Move to UI
 func display_texture3d(texture):
 	var display_texture = ImageTexture.new()
 	var current_layer = int(SLICE * (IMAGE_SIZE_PIXELS-1))
