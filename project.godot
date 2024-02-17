@@ -27,7 +27,7 @@ _global_script_class_icons={
 [application]
 
 config/name="Mountain Village Builder"
-run/main_scene="res://clouds/CloudsRenderTestV2.tscn"
+run/main_scene="res://clouds/v2/CloudsRenderTestV2.tscn"
 config/icon="res://icon.png"
 
 [editor_plugins]
