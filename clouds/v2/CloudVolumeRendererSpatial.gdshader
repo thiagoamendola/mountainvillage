@@ -109,15 +109,14 @@ void fragment() {
 			// t = (cameraPos * world.up + d) / (fragDir * world.up)
 
 			// Forget change of coordinate for now. Box is align with global coordinate 
-			vec2 voxelPosInSlice = vec2(((bound_max.z - bound_min.z) / (voxelPosition.z - bound_min.z)), ((bound_max.x - bound_min.x) / (voxelPosition.x - bound_min.x)));
-			voxelPosInSlice.xy *= vec2(bound_max.z - bound_min.z, bound_max.x - bound_min.x);
+			// vec2 voxelPosInSlice = vec2(((bound_max.z - bound_min.z) / (voxelPosition.z - bound_min.z)), ((bound_max.x - bound_min.x) / (voxelPosition.x - bound_min.x)));
+			// voxelPosInSlice.xy *= vec2(bound_max.z - bound_min.z, bound_max.x - bound_min.x);
 
 			// CONCLUSION: I can't trust in my voxelPosition. Needing to fix the perspective issue first
 
-			color = vec4(vec3(1.0, 0.0, 0.0), 1.0*voxelPosInSlice.x);
+//			color = vec4(vec3(1.0, 0.0, 0.0), 1.0*voxelPosInSlice.x);
 		}
 	}
-
 	
 	ALBEDO = color.rgb;
 	ALPHA = color.a;
