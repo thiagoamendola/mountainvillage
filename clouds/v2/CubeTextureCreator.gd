@@ -14,15 +14,6 @@ var b_seamless_points_per_axis
 
 var generation_time := 0.0
 
-# Parameters
-var p_image_size_pixels
-var p_r_points_per_axis
-var p_g_points_per_axis
-var p_b_points_per_axis
-var p_r_intensity_multiplier
-var p_g_intensity_multiplier
-var p_b_intensity_multiplier
-
 func _init():
 	print("TIMTIM")
 	pass
@@ -32,20 +23,21 @@ func cloud_texture_creation(params):
 	print("START")
 	var start_time = float(OS.get_system_time_msecs())
 
-	get_vars_from_params_list(params)
-
-	var full_texture = setup_texture_creation();
+	var full_texture = setup_texture_creation(params);
 
 	# Step 1: Create points for each channel
 	var r_points = create_discrete_sector_points( \
+		params, \
 		r_sector_size, \
-		p_r_points_per_axis)
+		params.r_points_per_axis)
 	var g_points = create_discrete_sector_points( \
+		params, \
 		g_sector_size, \
-		p_g_points_per_axis)
+		params.g_points_per_axis)
 	var b_points = create_discrete_sector_points( \
+		params, \
 		b_sector_size, \
-		p_b_points_per_axis)
+		params.b_points_per_axis)
 
 	# Step 2: Render into 3D sampler
 
@@ -53,36 +45,36 @@ func cloud_texture_creation(params):
 	print((end_time - start_time)/1000)
 	print("Start 3d sampler")
 
-	for z in range(p_image_size_pixels):
+	for z in range(params.image_size_pixels):
 		var layer = full_texture.get_layer_data(z)
 		layer.lock()
 
 		#-> Multithread this? IDEA: create a shared pool of indexes and multiple threads. Each thread pops a value from the pool and processes it. Once done, it pops the next index until the list is over. Mutex is required for popping the pool
-		for x in range(p_image_size_pixels):
-			for y in range(p_image_size_pixels):
+		for x in range(params.image_size_pixels):
+			for y in range(params.image_size_pixels):
 				var current_voxel = Vector3(x, y, z)
 				
 				var r_final_value = get_color_for_channel( \
 					current_voxel, \
 					r_points, \
 					r_sector_size, \
-					p_r_points_per_axis, \
-					p_r_intensity_multiplier, \
-					p_image_size_pixels)
+					params.r_points_per_axis, \
+					params.r_intensity_multiplier, \
+					params.image_size_pixels)
 				var g_final_value = get_color_for_channel( \
 					current_voxel, \
 					g_points, \
 					g_sector_size, \
-					p_g_points_per_axis, \
-					p_g_intensity_multiplier, \
-					p_image_size_pixels)
+					params.g_points_per_axis, \
+					params.g_intensity_multiplier, \
+					params.image_size_pixels)
 				var b_final_value = get_color_for_channel( \
 					current_voxel, \
 					b_points, \
 					b_sector_size, \
-					p_b_points_per_axis, \
-					p_b_intensity_multiplier, \
-					p_image_size_pixels)
+					params.b_points_per_axis, \
+					params.b_intensity_multiplier, \
+					params.image_size_pixels)
 				# Write to sampler
 				layer.set_pixel(x, y, Color(1-r_final_value, 1-g_final_value, 1-b_final_value))
 
@@ -99,39 +91,28 @@ func cloud_texture_creation(params):
 	return full_texture
 
 
-# Convert list of params into broken down variables (accessing a dict increases execution time)
-func get_vars_from_params_list(params):
-	p_image_size_pixels = params.image_size_pixels
-	p_r_points_per_axis = params.r_points_per_axis
-	p_g_points_per_axis = params.g_points_per_axis
-	p_b_points_per_axis = params.b_points_per_axis
-	p_r_intensity_multiplier = params.r_intensity_multiplier
-	p_g_intensity_multiplier = params.g_intensity_multiplier
-	p_b_intensity_multiplier = params.b_intensity_multiplier
-
-
 # Sets up necessary parameters and texture object.
-func setup_texture_creation():
+func setup_texture_creation(params):
 	# Set main variables with latest values.
 	# <-- Do I need all of these???
-	r_points_count = p_r_points_per_axis*p_r_points_per_axis*p_r_points_per_axis
-	r_sector_size = ceil(p_image_size_pixels/p_r_points_per_axis)
-	r_seamless_points_per_axis = p_r_points_per_axis+2
+	r_points_count = params.r_points_per_axis*params.r_points_per_axis*params.r_points_per_axis
+	r_sector_size = ceil(params.image_size_pixels/params.r_points_per_axis)
+	r_seamless_points_per_axis = params.r_points_per_axis+2
 
-	g_points_count = p_g_points_per_axis*p_g_points_per_axis*p_g_points_per_axis
-	g_sector_size = ceil(p_image_size_pixels/p_g_points_per_axis)
-	g_seamless_points_per_axis = p_g_points_per_axis+2
+	g_points_count = params.g_points_per_axis*params.g_points_per_axis*params.g_points_per_axis
+	g_sector_size = ceil(params.image_size_pixels/params.g_points_per_axis)
+	g_seamless_points_per_axis = params.g_points_per_axis+2
 
-	b_points_count = p_b_points_per_axis*p_b_points_per_axis*p_b_points_per_axis
-	b_sector_size = ceil(p_image_size_pixels/p_b_points_per_axis)
-	b_seamless_points_per_axis = p_b_points_per_axis+2
+	b_points_count = params.b_points_per_axis*params.b_points_per_axis*params.b_points_per_axis
+	b_sector_size = ceil(params.image_size_pixels/params.b_points_per_axis)
+	b_seamless_points_per_axis = params.b_points_per_axis+2
 
 	# Create default image for TextureRect to work.
 	var texture = Texture3D.new()
-	texture.create(p_image_size_pixels, p_image_size_pixels, p_image_size_pixels, Image.FORMAT_RGBA8)
-	for i in range(p_image_size_pixels):
+	texture.create(params.image_size_pixels, params.image_size_pixels, params.image_size_pixels, Image.FORMAT_RGBA8)
+	for i in range(params.image_size_pixels):
 		var image = Image.new()
-		image.create(p_image_size_pixels, p_image_size_pixels, false, Image.FORMAT_RGBA8)
+		image.create(params.image_size_pixels, params.image_size_pixels, false, Image.FORMAT_RGBA8)
 		image.lock()
 		image.fill(Color(0, 0, 0))
 		image.unlock()
@@ -140,7 +121,7 @@ func setup_texture_creation():
 
 
 # Creates a list of points based in sectors. Used as part of Worley Noise algorithm.
-func create_discrete_sector_points(sector_size, points_per_axis):
+func create_discrete_sector_points(params, sector_size, points_per_axis):
 	# Create 3D array, slightly bigger to cover mirrored edges
 	var seamless_axis = points_per_axis+2
 	var end = points_per_axis-1
@@ -167,41 +148,41 @@ func create_discrete_sector_points(sector_size, points_per_axis):
 	# - Fill squares (NxNx1) with mirrored entries (x6)
 	for x in range(points_per_axis):
 		for y in range(points_per_axis):
-			points[1+x][1+y][0] = points[x+1][y+1][end+1] + Vector3(0,0,-p_image_size_pixels)
-			points[1+x][1+y][ends] = points[x+1][y+1][1] + Vector3(0,0, p_image_size_pixels)
+			points[1+x][1+y][0] = points[x+1][y+1][end+1] + Vector3(0,0,-params.image_size_pixels)
+			points[1+x][1+y][ends] = points[x+1][y+1][1] + Vector3(0,0, params.image_size_pixels)
 	for x in range(points_per_axis):
 		for z in range(points_per_axis):
-			points[1+x][0][1+z] = points[x+1][end+1][z+1] + Vector3(0,-p_image_size_pixels, 0)
-			points[1+x][ends][1+z] = points[x+1][1][z+1] + Vector3(0, p_image_size_pixels, 0)
+			points[1+x][0][1+z] = points[x+1][end+1][z+1] + Vector3(0,-params.image_size_pixels, 0)
+			points[1+x][ends][1+z] = points[x+1][1][z+1] + Vector3(0, params.image_size_pixels, 0)
 	for y in range(points_per_axis):
 		for z in range(points_per_axis):
-			points[0][1+y][1+z] = points[end+1][y+1][z+1] + Vector3(-p_image_size_pixels, 0, 0)
-			points[ends][1+y][1+z] = points[1][y+1][z+1] + Vector3( p_image_size_pixels, 0, 0)
+			points[0][1+y][1+z] = points[end+1][y+1][z+1] + Vector3(-params.image_size_pixels, 0, 0)
+			points[ends][1+y][1+z] = points[1][y+1][z+1] + Vector3( params.image_size_pixels, 0, 0)
 	# - Fill corner lines (Nx1x1) with mirrored entries (x12)
 	for x in range(points_per_axis):
-		points[x+1][0][0] = points[x+1][end+1][end+1] + Vector3(0,-p_image_size_pixels,-p_image_size_pixels)
-		points[x+1][ends][0] = points[x+1][1][end+1] + Vector3(0, p_image_size_pixels,-p_image_size_pixels)
-		points[x+1][0][ends] = points[x+1][end+1][1] + Vector3(0,-p_image_size_pixels, p_image_size_pixels)
-		points[x+1][ends][ends] = points[x+1][1][1] + Vector3(0, p_image_size_pixels, p_image_size_pixels)
+		points[x+1][0][0] = points[x+1][end+1][end+1] + Vector3(0,-params.image_size_pixels,-params.image_size_pixels)
+		points[x+1][ends][0] = points[x+1][1][end+1] + Vector3(0, params.image_size_pixels,-params.image_size_pixels)
+		points[x+1][0][ends] = points[x+1][end+1][1] + Vector3(0,-params.image_size_pixels, params.image_size_pixels)
+		points[x+1][ends][ends] = points[x+1][1][1] + Vector3(0, params.image_size_pixels, params.image_size_pixels)
 	for y in range(points_per_axis):
-		points[0][y+1][0] = points[end+1][y+1][end+1] + Vector3(-p_image_size_pixels, 0,-p_image_size_pixels)
-		points[ends][y+1][0] = points[1][y+1][end+1] + Vector3( p_image_size_pixels, 0,-p_image_size_pixels)
-		points[0][y+1][ends] = points[end+1][y+1][1] + Vector3(-p_image_size_pixels, 0, p_image_size_pixels)
-		points[ends][y+1][ends] = points[1][y+1][1] + Vector3( p_image_size_pixels, 0, p_image_size_pixels)
+		points[0][y+1][0] = points[end+1][y+1][end+1] + Vector3(-params.image_size_pixels, 0,-params.image_size_pixels)
+		points[ends][y+1][0] = points[1][y+1][end+1] + Vector3( params.image_size_pixels, 0,-params.image_size_pixels)
+		points[0][y+1][ends] = points[end+1][y+1][1] + Vector3(-params.image_size_pixels, 0, params.image_size_pixels)
+		points[ends][y+1][ends] = points[1][y+1][1] + Vector3( params.image_size_pixels, 0, params.image_size_pixels)
 	for z in range(points_per_axis):
-		points[0][0][z+1] = points[end+1][end+1][z+1] + Vector3(-p_image_size_pixels,-p_image_size_pixels, 0)
-		points[ends][0][z+1] = points[1][end+1][z+1] + Vector3( p_image_size_pixels,-p_image_size_pixels, 0)
-		points[0][ends][z+1] = points[end+1][1][z+1] + Vector3(-p_image_size_pixels, p_image_size_pixels, 0)
-		points[ends][ends][z+1] = points[1][1][z+1] + Vector3( p_image_size_pixels, p_image_size_pixels, 0)
+		points[0][0][z+1] = points[end+1][end+1][z+1] + Vector3(-params.image_size_pixels,-params.image_size_pixels, 0)
+		points[ends][0][z+1] = points[1][end+1][z+1] + Vector3( params.image_size_pixels,-params.image_size_pixels, 0)
+		points[0][ends][z+1] = points[end+1][1][z+1] + Vector3(-params.image_size_pixels, params.image_size_pixels, 0)
+		points[ends][ends][z+1] = points[1][1][z+1] + Vector3( params.image_size_pixels, params.image_size_pixels, 0)
 	# - Fill corner elements (1x1x1) with mirrored entries (x8)
-	points[0][0][0] = points[end+1][end+1][end+1] + Vector3(-p_image_size_pixels,-p_image_size_pixels,-p_image_size_pixels)
-	points[ends][0][0] = points[1][end+1][end+1] + Vector3( p_image_size_pixels,-p_image_size_pixels,-p_image_size_pixels)
-	points[0][ends][0] = points[end+1][1][end+1] + Vector3(-p_image_size_pixels, p_image_size_pixels,-p_image_size_pixels)
-	points[ends][ends][0] = points[1][1][end+1] + Vector3( p_image_size_pixels, p_image_size_pixels,-p_image_size_pixels)
-	points[0][0][ends] = points[end+1][end+1][1] + Vector3(-p_image_size_pixels,-p_image_size_pixels, p_image_size_pixels)
-	points[ends][0][ends] = points[1][end+1][1] + Vector3( p_image_size_pixels,-p_image_size_pixels, p_image_size_pixels)
-	points[0][ends][ends] = points[end+1][1][1] + Vector3(-p_image_size_pixels, p_image_size_pixels, p_image_size_pixels)
-	points[ends][ends][ends] = points[1][1][1] + Vector3( p_image_size_pixels, p_image_size_pixels, p_image_size_pixels)
+	points[0][0][0] = points[end+1][end+1][end+1] + Vector3(-params.image_size_pixels,-params.image_size_pixels,-params.image_size_pixels)
+	points[ends][0][0] = points[1][end+1][end+1] + Vector3( params.image_size_pixels,-params.image_size_pixels,-params.image_size_pixels)
+	points[0][ends][0] = points[end+1][1][end+1] + Vector3(-params.image_size_pixels, params.image_size_pixels,-params.image_size_pixels)
+	points[ends][ends][0] = points[1][1][end+1] + Vector3( params.image_size_pixels, params.image_size_pixels,-params.image_size_pixels)
+	points[0][0][ends] = points[end+1][end+1][1] + Vector3(-params.image_size_pixels,-params.image_size_pixels, params.image_size_pixels)
+	points[ends][0][ends] = points[1][end+1][1] + Vector3( params.image_size_pixels,-params.image_size_pixels, params.image_size_pixels)
+	points[0][ends][ends] = points[end+1][1][1] + Vector3(-params.image_size_pixels, params.image_size_pixels, params.image_size_pixels)
+	points[ends][ends][ends] = points[1][1][1] + Vector3( params.image_size_pixels, params.image_size_pixels, params.image_size_pixels)
 
 	return points
 
