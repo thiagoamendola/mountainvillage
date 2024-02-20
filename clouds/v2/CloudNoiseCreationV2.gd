@@ -8,21 +8,12 @@ var SLICE := 1.0
 
 var R_POINTS_PER_AXIS := 5
 var R_INTENSITY_MULTIPLIER := 1.1
-var R_POINTS_COUNT
-var R_SECTOR_SIZE
-var R_SEAMLESS_POINTS_PER_AXIS
 
 var G_POINTS_PER_AXIS := 6
 var G_INTENSITY_MULTIPLIER := .7
-var G_POINTS_COUNT
-var G_SECTOR_SIZE
-var G_SEAMLESS_POINTS_PER_AXIS
 
 var B_POINTS_PER_AXIS := 8
 var B_INTENSITY_MULTIPLIER := .7
-var B_POINTS_COUNT
-var B_SECTOR_SIZE
-var B_SEAMLESS_POINTS_PER_AXIS
 
 var SLICE_MODE := false
 
@@ -30,7 +21,10 @@ var rerender_param_cache
 var regenerate_param_cache
 
 var noise_texture
-var generation_time := 0.0
+
+var CubeTextureCreator = load("res://clouds/v2/CubeTextureCreator.gd")
+
+var cube_texture_creator
 
 """
 We need to aplit this into other files. here's a list:
@@ -41,14 +35,15 @@ We need to aplit this into other files. here's a list:
 """
 
 func _ready():
-    # Instantiation and grab ref to UI
-	# Generate cube texture and display 
-	noise_texture = cloud_texture_creation()
+	# Instantiation and grab ref to UI
+	cube_texture_creator = CubeTextureCreator.new()
+
+	# Generate cube texture and display
+	noise_texture = generate_texture()
 	display_texture3d(noise_texture)
 	pass
 
 func _process(delta):
-
 	if (RUN_IN_EDITOR):
 		# Not working????
 		var current_rerender_param_cache = [ \
@@ -75,7 +70,7 @@ func _process(delta):
 		if (current_rerender_param_cache != rerender_param_cache):
 			if (current_regenerate_param_cache != regenerate_param_cache):
 				regenerate_param_cache = current_regenerate_param_cache
-				noise_texture = cloud_texture_creation()
+				noise_texture = generate_texture()
 			rerender_param_cache = current_rerender_param_cache
 			display_texture3d(noise_texture)
 
@@ -85,7 +80,7 @@ func _process(delta):
 func _input(event):
 	if event is InputEventKey and event.pressed:
 		if event.scancode == KEY_R:
-			noise_texture = cloud_texture_creation()
+			noise_texture = generate_texture()
 			display_texture3d(noise_texture)
 	pass
 
@@ -182,193 +177,20 @@ func _get_property_list():
 
 	return props
 
-# Move to TCT
-func setup_texture_creation():
-	# Set main variables with latest values.
-	R_POINTS_COUNT = R_POINTS_PER_AXIS*R_POINTS_PER_AXIS*R_POINTS_PER_AXIS
-	R_SECTOR_SIZE = ceil(IMAGE_SIZE_PIXELS/R_POINTS_PER_AXIS)
-	R_SEAMLESS_POINTS_PER_AXIS = R_POINTS_PER_AXIS+2
 
-	G_POINTS_COUNT = G_POINTS_PER_AXIS*G_POINTS_PER_AXIS*G_POINTS_PER_AXIS
-	G_SECTOR_SIZE = ceil(IMAGE_SIZE_PIXELS/G_POINTS_PER_AXIS)
-	G_SEAMLESS_POINTS_PER_AXIS = G_POINTS_PER_AXIS+2
+# Prepare parameters and call CubeTextureCreator
+func generate_texture():
+	var texture_creation_params = {
+		"image_size_pixels": IMAGE_SIZE_PIXELS,
+		"r_points_per_axis": R_POINTS_PER_AXIS,
+		"g_points_per_axis": G_POINTS_PER_AXIS,
+		"b_points_per_axis": B_POINTS_PER_AXIS,
+		"r_intensity_multiplier": R_INTENSITY_MULTIPLIER,
+		"g_intensity_multiplier": G_INTENSITY_MULTIPLIER,
+		"b_intensity_multiplier": B_INTENSITY_MULTIPLIER
+	}
+	return cube_texture_creator.cloud_texture_creation(texture_creation_params)
 
-	B_POINTS_COUNT = B_POINTS_PER_AXIS*B_POINTS_PER_AXIS*B_POINTS_PER_AXIS
-	B_SECTOR_SIZE = ceil(IMAGE_SIZE_PIXELS/B_POINTS_PER_AXIS)
-	B_SEAMLESS_POINTS_PER_AXIS = B_POINTS_PER_AXIS+2
-	# Create default image for TextureRect to work.
-	var texture = Texture3D.new()
-	texture.create(IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS, Image.FORMAT_RGBA8)
-	for i in range(IMAGE_SIZE_PIXELS):
-		var image = Image.new()
-		image.create(IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS, false, Image.FORMAT_RGBA8)
-		image.lock()
-		image.fill(Color(0, 0, 0))
-		image.unlock()
-		texture.set_layer_data(image, i)
-	return texture
-
-# Move to CTC
-# Creates a list of points based in sectors. Used as part of Worley Noise algorithm.
-func create_discrete_sector_points(sector_size, points_per_axis):
-	# Create 3D array, slightly bigger to cover mirrored edges
-	var seamless_axis = points_per_axis+2
-	var end = points_per_axis-1
-	var ends = seamless_axis-1
-	var points = []
-	points.resize(seamless_axis)
-	for x in range(seamless_axis):
-		points[x] = []
-		points[x].resize(seamless_axis)
-		for y in range(seamless_axis):
-			points[x][y] = []
-			points[x][y].resize(seamless_axis)
-
-	# Populate inner cube (NxNxN) of array with random points 
-	for x in range(points_per_axis):
-		for y in range(points_per_axis):
-			for z in range(points_per_axis):
-				points[x+1][y+1][z+1] = Vector3( \
-					int(rand_range(sector_size*x, sector_size*x + sector_size)), \
-					int(rand_range(sector_size*y, sector_size*y + sector_size)), \
-					int(rand_range(sector_size*z, sector_size*z + sector_size)))
-
-	# Populate mirrored edges
-	# - Fill squares (NxNx1) with mirrored entries (x6)
-	for x in range(points_per_axis):
-		for y in range(points_per_axis):
-			points[1+x][1+y][0] = points[x+1][y+1][end+1] + Vector3(0,0,-IMAGE_SIZE_PIXELS)
-			points[1+x][1+y][ends] = points[x+1][y+1][1] + Vector3(0,0, IMAGE_SIZE_PIXELS)
-	for x in range(points_per_axis):
-		for z in range(points_per_axis):
-			points[1+x][0][1+z] = points[x+1][end+1][z+1] + Vector3(0,-IMAGE_SIZE_PIXELS, 0)
-			points[1+x][ends][1+z] = points[x+1][1][z+1] + Vector3(0, IMAGE_SIZE_PIXELS, 0)
-	for y in range(points_per_axis):
-		for z in range(points_per_axis):
-			points[0][1+y][1+z] = points[end+1][y+1][z+1] + Vector3(-IMAGE_SIZE_PIXELS, 0, 0)
-			points[ends][1+y][1+z] = points[1][y+1][z+1] + Vector3( IMAGE_SIZE_PIXELS, 0, 0)
-	# - Fill corner lines (Nx1x1) with mirrored entries (x12)
-	for x in range(points_per_axis):
-		points[x+1][0][0] = points[x+1][end+1][end+1] + Vector3(0,-IMAGE_SIZE_PIXELS,-IMAGE_SIZE_PIXELS)
-		points[x+1][ends][0] = points[x+1][1][end+1] + Vector3(0, IMAGE_SIZE_PIXELS,-IMAGE_SIZE_PIXELS)
-		points[x+1][0][ends] = points[x+1][end+1][1] + Vector3(0,-IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS)
-		points[x+1][ends][ends] = points[x+1][1][1] + Vector3(0, IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS)
-	for y in range(points_per_axis):
-		points[0][y+1][0] = points[end+1][y+1][end+1] + Vector3(-IMAGE_SIZE_PIXELS, 0,-IMAGE_SIZE_PIXELS)
-		points[ends][y+1][0] = points[1][y+1][end+1] + Vector3( IMAGE_SIZE_PIXELS, 0,-IMAGE_SIZE_PIXELS)
-		points[0][y+1][ends] = points[end+1][y+1][1] + Vector3(-IMAGE_SIZE_PIXELS, 0, IMAGE_SIZE_PIXELS)
-		points[ends][y+1][ends] = points[1][y+1][1] + Vector3( IMAGE_SIZE_PIXELS, 0, IMAGE_SIZE_PIXELS)
-	for z in range(points_per_axis):
-		points[0][0][z+1] = points[end+1][end+1][z+1] + Vector3(-IMAGE_SIZE_PIXELS,-IMAGE_SIZE_PIXELS, 0)
-		points[ends][0][z+1] = points[1][end+1][z+1] + Vector3( IMAGE_SIZE_PIXELS,-IMAGE_SIZE_PIXELS, 0)
-		points[0][ends][z+1] = points[end+1][1][z+1] + Vector3(-IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS, 0)
-		points[ends][ends][z+1] = points[1][1][z+1] + Vector3( IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS, 0)
-	# - Fill corner elements (1x1x1) with mirrored entries (x8)
-	points[0][0][0] = points[end+1][end+1][end+1] + Vector3(-IMAGE_SIZE_PIXELS,-IMAGE_SIZE_PIXELS,-IMAGE_SIZE_PIXELS)
-	points[ends][0][0] = points[1][end+1][end+1] + Vector3( IMAGE_SIZE_PIXELS,-IMAGE_SIZE_PIXELS,-IMAGE_SIZE_PIXELS)
-	points[0][ends][0] = points[end+1][1][end+1] + Vector3(-IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS,-IMAGE_SIZE_PIXELS)
-	points[ends][ends][0] = points[1][1][end+1] + Vector3( IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS,-IMAGE_SIZE_PIXELS)
-	points[0][0][ends] = points[end+1][end+1][1] + Vector3(-IMAGE_SIZE_PIXELS,-IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS)
-	points[ends][0][ends] = points[1][end+1][1] + Vector3( IMAGE_SIZE_PIXELS,-IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS)
-	points[0][ends][ends] = points[end+1][1][1] + Vector3(-IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS)
-	points[ends][ends][ends] = points[1][1][1] + Vector3( IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS, IMAGE_SIZE_PIXELS)
-
-	return points
-
-# Move to CTC
-# Get points for current and all neighbor sectors.
-func get_adjacent_sector_points(seamless_points, current_voxel, sector_size, points_per_axis):
-	var adjacent_points = []
-	# Get current sector and apply offset to match seamless array
-	var current_sector_vec = Vector3( \
-		min(int(current_voxel.x/sector_size) + 1, points_per_axis-1), \
-		min(int(current_voxel.y/sector_size) + 1, points_per_axis-1), \
-		min(int(current_voxel.z/sector_size) + 1, points_per_axis-1))
-	# Add all adjacent sector points
-	for x in range(-1,2):
-		for y in range(-1,2):
-			for z in range(-1,2):
-				adjacent_points.append(seamless_points[current_sector_vec.x+x] \
-													  [current_sector_vec.y+y] \
-													  [current_sector_vec.z+z])
-	return adjacent_points
-
-# Move to CTC
-func get_color_for_channel(current_voxel, points, sector_size, points_per_axis, intensity_multiplier):
-	# Calculate min dist 
-	var min_dist = INF
-	for adj_point in get_adjacent_sector_points(points, current_voxel, sector_size, points_per_axis):
-		var cur_dist = adj_point.distance_to(current_voxel)
-		if cur_dist < min_dist:
-			min_dist = cur_dist
-	# Get final value for channel
-	return clamp(intensity_multiplier * min_dist / IMAGE_SIZE_PIXELS, 0.0, 1.0)
-
-# Move to CTC
-func cloud_texture_creation():
-	print("START")
-	var start_time = float(OS.get_system_time_msecs())
-
-	var full_texture = setup_texture_creation();
-
-	# Step 1: Create points for each channel
-	var r_points = create_discrete_sector_points( \
-		R_SECTOR_SIZE, \
-		R_POINTS_PER_AXIS)
-	var g_points = create_discrete_sector_points( \
-		G_SECTOR_SIZE, \
-		G_POINTS_PER_AXIS)
-	var b_points = create_discrete_sector_points( \
-		B_SECTOR_SIZE, \
-		B_POINTS_PER_AXIS)
-
-	# Step 2: Render into 3D sampler
-
-	var end_time = float(OS.get_system_time_msecs())
-	print((end_time - start_time)/1000)
-	print("Start 3d sampler")
-
-	for z in range(IMAGE_SIZE_PIXELS):
-		var layer = full_texture.get_layer_data(z)
-		layer.lock()
-
-		#-> Multithread this? IDEA: create a shared pool of indexes and multiple threads. Each thread pops a value from the pool and processes it. Once done, it pops the next index until the list is over. Mutex is required for popping the pool
-		for x in range(IMAGE_SIZE_PIXELS):
-			for y in range(IMAGE_SIZE_PIXELS):
-				var current_voxel = Vector3(x, y, z)
-				
-				var r_final_value = get_color_for_channel( \
-					current_voxel, \
-					r_points, \
-					R_SECTOR_SIZE, \
-					R_POINTS_PER_AXIS, \
-					R_INTENSITY_MULTIPLIER)
-				var g_final_value = get_color_for_channel( \
-					current_voxel, \
-					g_points, \
-					G_SECTOR_SIZE, \
-					G_POINTS_PER_AXIS, \
-					G_INTENSITY_MULTIPLIER)
-				var b_final_value = get_color_for_channel( \
-					current_voxel, \
-					b_points, \
-					B_SECTOR_SIZE, \
-					B_POINTS_PER_AXIS, \
-					B_INTENSITY_MULTIPLIER)
-				# Write to sampler
-				layer.set_pixel(x, y, Color(1-r_final_value, 1-g_final_value, 1-b_final_value))
-
-		layer.unlock()
-		full_texture.set_layer_data(layer, z)
-
-	# Step 3: Display
-
-	end_time = float(OS.get_system_time_msecs())
-	generation_time = (end_time - start_time) / 1000
-	print(generation_time)
-	print("3d sampler completed!")
-
-	return full_texture
 
 # Move to UI
 func display_texture3d(texture):
@@ -377,6 +199,7 @@ func display_texture3d(texture):
 	display_texture.create_from_image(texture.data['layers'][current_layer])
 
 	$DebugUI/TextureVisualizer.texture = display_texture
+	var generation_time = cube_texture_creator.get_last_generation_time()
 	var texture_details = "time = {generation_time}s"
 	$DebugUI/TextureInfo.text = texture_details.format({
 		"generation_time": generation_time
