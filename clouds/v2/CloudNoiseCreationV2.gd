@@ -23,15 +23,13 @@ var regenerate_param_cache
 var noise_texture
 
 var CubeTextureCreator = load("res://clouds/v2/CubeTextureCreator.gd")
-
 var cube_texture_creator
 
 """
 We need to aplit this into other files. here's a list:
 
 - Current one: will be the Manager. Instantiates others, hangles Godot editor vars and calls stuff
-- CubeTextureCreator
-- TextureUIHelper
+- CubeTextureCreator: will generate the cube texture
 """
 
 func _ready():
@@ -40,7 +38,7 @@ func _ready():
 
 	# Generate cube texture and display
 	noise_texture = generate_texture()
-	display_texture3d(noise_texture)
+	render_volume(noise_texture)
 	pass
 
 func _process(delta):
@@ -72,7 +70,7 @@ func _process(delta):
 				regenerate_param_cache = current_regenerate_param_cache
 				noise_texture = generate_texture()
 			rerender_param_cache = current_rerender_param_cache
-			display_texture3d(noise_texture)
+			render_volume(noise_texture)
 
 	pass
 
@@ -81,7 +79,7 @@ func _input(event):
 	if event is InputEventKey and event.pressed:
 		if event.scancode == KEY_R:
 			noise_texture = generate_texture()
-			display_texture3d(noise_texture)
+			render_volume(noise_texture)
 	pass
 
 func _get_property_list():
@@ -180,6 +178,8 @@ func _get_property_list():
 
 # Prepare parameters and call CubeTextureCreator
 func generate_texture():
+
+	# Create params to send to texture generator
 	var texture_creation_params = {
 		"image_size_pixels": IMAGE_SIZE_PIXELS,
 		"r_points_per_axis": R_POINTS_PER_AXIS,
@@ -189,29 +189,39 @@ func generate_texture():
 		"g_intensity_multiplier": G_INTENSITY_MULTIPLIER,
 		"b_intensity_multiplier": B_INTENSITY_MULTIPLIER
 	}
-	return cube_texture_creator.cloud_texture_creation(texture_creation_params)
 
+	# Set UI to generating and wait for UI render
+	$DebugUI/TextureInfo.text = "GENERATING..."
+	yield(get_tree(), "idle_frame")
+	yield(get_tree(), "idle_frame")
 
-# Move to UI
-func display_texture3d(texture):
-	var display_texture = ImageTexture.new()
-	var current_layer = int(SLICE * (IMAGE_SIZE_PIXELS-1))
-	display_texture.create_from_image(texture.data['layers'][current_layer])
+	# Generate cube texture
+	var cube_texture = cube_texture_creator.cloud_texture_creation(texture_creation_params)
 
-	$DebugUI/TextureVisualizer.texture = display_texture
+	# Set UI with generation time
 	var generation_time = cube_texture_creator.get_last_generation_time()
 	var texture_details = "time = {generation_time}s"
 	$DebugUI/TextureInfo.text = texture_details.format({
 		"generation_time": generation_time
 	})
 
+	# Display slice of texture in tool assistant
+	var display_texture = ImageTexture.new()
+	var current_layer = int(SLICE * (IMAGE_SIZE_PIXELS-1))
+	display_texture.create_from_image(cube_texture.data['layers'][current_layer])
+	$DebugUI/TextureVisualizer.texture = display_texture
+
+	return cube_texture
+
+
+func render_volume(cube_texture):
 	var mat = get_node("ShaderQuad").get_active_material(0)
 	var volume_aabb = $CloudVolume.get_aabb();
 	var bound_min = Vector3($CloudVolume.global_translation) + \
 		volume_aabb.position * volume_aabb.size * $CloudVolume.scale / 2
 	var bound_max = Vector3($CloudVolume.global_translation) + \
 		volume_aabb.end * volume_aabb.size * $CloudVolume.scale / 2
-	mat.set_shader_param("noise_texture", texture)
+	mat.set_shader_param("noise_texture", cube_texture)
 	mat.set_shader_param("bound_min", bound_min)
 	mat.set_shader_param("bound_max", bound_max)
 	mat.set_shader_param("slice_mode", SLICE_MODE)
